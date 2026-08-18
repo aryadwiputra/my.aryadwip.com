@@ -4,6 +4,7 @@ import { logger } from "hono/logger";
 import { env } from "./lib/env";
 import auth from "./routes/auth";
 import journals from "./routes/journals";
+import tasks from "./routes/tasks";
 import type { AppEnv } from "./types";
 
 export function createApp() {
@@ -15,6 +16,7 @@ export function createApp() {
 
   app.route("/api/auth", auth);
   app.route("/api/journals", journals);
+  app.route("/api/tasks", tasks);
 
   app.notFound((c) => c.json({ error: "NotFound", message: "Route tidak ditemukan" }, 404));
 

@@ -39,3 +39,34 @@ export interface JournalPayload {
   energy?: number;
   prompts?: JournalPrompts;
 }
+
+export type TaskPriority = "P1" | "P2" | "P3" | "P4";
+export type TaskStatus = "todo" | "in_progress" | "completed";
+
+export interface Task {
+  id: string;
+  title: string;
+  description?: string | null;
+  dueDate?: string | null;
+  priority: TaskPriority;
+  status: TaskStatus;
+  tags: string[];
+  completedAt?: number | null;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface TaskPayload {
+  title?: string;
+  description?: string | null;
+  dueDate?: string | null;
+  priority?: TaskPriority;
+  tags?: string[];
+}
+
+export interface TaskStats {
+  total: number;
+  pending: number;
+  completed: number;
+  completedToday: number;
+}
