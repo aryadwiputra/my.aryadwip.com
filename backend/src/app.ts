@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { env } from "./lib/env";
 import auth from "./routes/auth";
+import journals from "./routes/journals";
 import type { AppEnv } from "./types";
 
 export function createApp() {
@@ -13,6 +14,7 @@ export function createApp() {
   app.get("/", (c) => c.json({ name: "ClarityFlow API", version: "0.1.0" }));
 
   app.route("/api/auth", auth);
+  app.route("/api/journals", journals);
 
   app.notFound((c) => c.json({ error: "NotFound", message: "Route tidak ditemukan" }, 404));
 

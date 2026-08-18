@@ -94,6 +94,6 @@ export function ensureSchema() {
       created_at INTEGER NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_tasks_user ON tasks(user_id);
-    CREATE INDEX IF NOT EXISTS idx_journals_user_date ON journals(user_id, date);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_journals_user_date ON journals(user_id, date);
   `);
 }
