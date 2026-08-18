@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+
+# Build outputs
+frontend/build/
+frontend/.react-router/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Lockfiles (keep bun.lock for reproducibility)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Temp
+tmp/
+temp/
+.tmp/
+
+# Data (dev DB files)
+*.db
+*.sqlite
+
+# OpenCode
+.opencode/goals/state.json.lock
