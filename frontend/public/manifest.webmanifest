@@ -1,0 +1,17 @@
+{
+  "name": "ClarityFlow",
+  "short_name": "ClarityFlow",
+  "description": "Personal productivity platform — journaling, tasks, ideas, notes, focus timer.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
