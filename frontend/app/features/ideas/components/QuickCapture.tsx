@@ -1,14 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Lightbulb } from "lucide-react";
 import { Button } from "~/components/ui/Button";
 import { Modal } from "~/components/ui/Modal";
 import { toastError, toastSuccess } from "~/lib/toast";
+import { useQuickCaptureStore } from "../quickCaptureStore";
 import { useCaptureIdea } from "../hooks";
 
 export function QuickCapture({ open, onClose }: { open: boolean; onClose: () => void }) {
   const capture = useCaptureIdea();
-  const [text, setText] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [text, setText] = useQuickCaptureStore((s) => [s.text, s.setText]);
+  const [submitting, setSubmitting] = useQuickCaptureStore((s) => [s.submitting, s.setSubmitting]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -50,20 +51,21 @@ export function QuickCapture({ open, onClose }: { open: boolean; onClose: () => 
   );
 }
 
-/** Global quick-capture: floating action button + Ctrl/Cmd+K shortcut. */
+/** Global quick-capture: Ctrl/Cmd+K shortcut + desktop FAB. */
 export function QuickCaptureGlobal() {
-  const [open, setOpen] = useState(false);
+  const open = useQuickCaptureStore((s) => s.open);
+  const setOpen = useQuickCaptureStore((s) => s.setOpen);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setOpen((v) => !v);
+        setOpen(!open);
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [open, setOpen]);
 
   return (
     <>
