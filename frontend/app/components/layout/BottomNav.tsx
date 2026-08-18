@@ -1,5 +1,5 @@
 import { NavLink } from "react-router";
-import { LayoutDashboard, BookOpen, CheckSquare, Timer, MoreHorizontal } from "lucide-react";
+import { LayoutDashboard, BookOpen, CheckSquare, Timer, Lightbulb, MoreHorizontal } from "lucide-react";
 import { cn } from "~/lib/cn";
 
 const items = [
@@ -37,6 +37,36 @@ export function BottomNav({ onMore }: { onMore: () => void }) {
             )}
           </NavLink>
         ))}
+
+        {/* Center raised Ideas button */}
+        <NavLink
+          to="/ideas"
+          className="relative flex flex-1 flex-col items-center"
+        >
+          {({ isActive }) => (
+            <>
+              <span
+                className={cn(
+                  "-mt-6 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition",
+                  isActive
+                    ? "bg-blue-700 text-white ring-4 ring-blue-200 dark:ring-blue-900"
+                    : "bg-blue-600 text-white",
+                )}
+              >
+                <Lightbulb className="h-7 w-7" />
+              </span>
+              <span
+                className={cn(
+                  "mt-0.5 text-[11px] font-medium",
+                  isActive ? "text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-400",
+                )}
+              >
+                Ideas
+              </span>
+            </>
+          )}
+        </NavLink>
+
         <button
           onClick={onMore}
           className="flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"

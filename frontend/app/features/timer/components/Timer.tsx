@@ -35,9 +35,11 @@ function beep() {
 interface TimerProps {
   taskId?: string;
   onComplete?: (minutes: number) => void;
+  variant?: "default" | "dark";
 }
 
-export function Timer({ taskId, onComplete }: TimerProps) {
+export function Timer({ taskId, onComplete, variant = "default" }: TimerProps) {
+  const onDark = variant === "dark";
   const startMutation = useStartSession();
   const endMutation = useEndSession();
 
@@ -147,7 +149,14 @@ export function Timer({ taskId, onComplete }: TimerProps) {
       {/* Progress ring */}
       <div className="relative h-56 w-56">
         <svg viewBox="0 0 200 200" className="h-full w-full -rotate-90">
-          <circle cx="100" cy="100" r={radius} fill="none" strokeWidth="10" className="stroke-gray-200 dark:stroke-gray-700" />
+          <circle
+            cx="100"
+            cy="100"
+            r={radius}
+            fill="none"
+            strokeWidth="10"
+            className={onDark ? "stroke-gray-800" : "stroke-gray-200 dark:stroke-gray-700"}
+          />
           <circle
             cx="100"
             cy="100"
@@ -157,14 +166,24 @@ export function Timer({ taskId, onComplete }: TimerProps) {
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={circumference * (1 - progress)}
-            className="stroke-blue-600 transition-all duration-500"
+            className="stroke-blue-500 transition-all duration-500"
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-5xl font-semibold tabular-nums text-gray-900 dark:text-white">
+          <span
+            className={cn(
+              "text-5xl font-semibold tabular-nums",
+              onDark ? "text-white" : "text-gray-900 dark:text-white",
+            )}
+          >
             {format(remainingMs)}
           </span>
-          <span className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <span
+            className={cn(
+              "mt-1 text-sm",
+              onDark ? "text-gray-400" : "text-gray-500 dark:text-gray-400",
+            )}
+          >
             {running ? "Fokus..." : remainingMs === totalMs ? "Siap mulai" : "Dijeda"}
           </span>
         </div>
@@ -180,7 +199,9 @@ export function Timer({ taskId, onComplete }: TimerProps) {
               "rounded-lg border px-4 py-2 text-sm font-medium transition",
               minutes === m && !custom
                 ? "border-blue-600 bg-blue-600 text-white"
-                : "border-gray-300 text-gray-700 hover:border-blue-500 dark:border-gray-700 dark:text-gray-200",
+                : onDark
+                  ? "border-gray-700 text-gray-300 hover:border-blue-500"
+                  : "border-gray-300 text-gray-700 hover:border-blue-500 dark:border-gray-700 dark:text-gray-200",
             )}
           >
             {m} min
@@ -193,7 +214,12 @@ export function Timer({ taskId, onComplete }: TimerProps) {
           onKeyDown={(e) => e.key === "Enter" && applyCustom()}
           placeholder="Custom"
           inputMode="numeric"
-          className="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+          className={cn(
+            "w-24 rounded-lg border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none",
+            onDark
+              ? "border-gray-700 bg-gray-900 text-white"
+              : "border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white",
+          )}
         />
       </div>
 

@@ -12,9 +12,9 @@ import { FocusMode } from "./components/FocusMode";
 
 function statCard(value: string, label: string) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-      <p className="text-2xl font-semibold text-gray-900 dark:text-white">{value}</p>
-      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{label}</p>
+    <div className="rounded-xl border border-gray-200 bg-white p-3 text-center sm:p-5 sm:text-left dark:border-gray-800 dark:bg-gray-900">
+      <p className="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">{value}</p>
+      <p className="mt-0.5 text-xs text-gray-500 sm:mt-1 sm:text-sm dark:text-gray-400">{label}</p>
     </div>
   );
 }
@@ -28,6 +28,8 @@ export default function TimerPage() {
   const [taskId, setTaskId] = useState<string>("");
   const [focusMode, setFocusMode] = useState(false);
 
+  const linkedTask = tasks.find((t) => t.id === taskId);
+
   function handleComplete(minutes: number) {
     const text =
       minutes >= 50
@@ -36,33 +38,32 @@ export default function TimerPage() {
     toastSuccess(text);
   }
 
-  const timer = (
-    <Timer taskId={taskId || undefined} onComplete={handleComplete} />
-  );
+  const timer = <Timer taskId={taskId || undefined} onComplete={handleComplete} />;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-5 sm:space-y-6">
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Focus Timer</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <h1 className="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">Focus Timer</h1>
+          <p className="mt-0.5 text-sm text-gray-500 sm:mt-1 dark:text-gray-400">
             Blok kerja fokus untuk deep work.
           </p>
         </div>
-        <Button variant="secondary" onClick={() => setFocusMode(true)}>
-          <Maximize2 className="h-4 w-4" /> Mode Fokus
+        <Button variant="secondary" onClick={() => setFocusMode(true)} className="shrink-0">
+          <Maximize2 className="h-4 w-4" /> <span className="hidden sm:inline">Mode Fokus</span>
+          <span className="sm:hidden">Fokus</span>
         </Button>
       </div>
 
       {/* Today summary */}
       {todayLoading ? (
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-3 gap-3">
           <SkeletonCard />
           <SkeletonCard />
           <SkeletonCard />
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-3 gap-3">
           {statCard(String(today?.sessions.length ?? 0), "Sesi hari ini")}
           {statCard(`${today?.focusMinutes ?? 0}m`, "Fokus hari ini")}
           {statCard(`${stats?.weekMinutes ?? 0}m`, "Fokus minggu ini")}
@@ -70,13 +71,15 @@ export default function TimerPage() {
       )}
 
       {/* Task association */}
-      <div className="flex items-center gap-3">
-        <TimerIcon className="h-5 w-5 text-gray-400" />
-        <label className="text-sm text-gray-600 dark:text-gray-300">Kaitkan dengan task:</label>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+        <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+          <TimerIcon className="h-5 w-5 text-gray-400" />
+          Kaitkan dengan task:
+        </label>
         <select
           value={taskId}
           onChange={(e) => setTaskId(e.target.value)}
-          className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white sm:flex-1"
         >
           <option value="">— Tidak ada —</option>
           {tasks
@@ -90,12 +93,16 @@ export default function TimerPage() {
       </div>
 
       {/* Timer */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-8 dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-8 dark:border-gray-800 dark:bg-gray-900">
         {timer}
       </div>
 
-      {/* Modal: FocusMode overlay */}
-      {focusMode && <FocusMode onExit={() => setFocusMode(false)}>{timer}</FocusMode>}
+      {/* FocusMode overlay */}
+      {focusMode && (
+        <FocusMode onExit={() => setFocusMode(false)} taskName={linkedTask?.title}>
+          <Timer taskId={taskId || undefined} onComplete={handleComplete} variant="dark" />
+        </FocusMode>
+      )}
 
       {/* Session history */}
       <section>
