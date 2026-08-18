@@ -1,13 +1,14 @@
-import type { Route } from "./+types/home";
-import { Welcome } from "../welcome/welcome";
+import { Navigate } from "react-router";
+import { useAuthStore } from "~/stores/auth";
 
-export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
-  ];
+export function meta() {
+  return [{ title: "ClarityFlow" }];
 }
 
+/**
+ * Root route: redirect to /dashboard if authenticated, otherwise /login.
+ */
 export default function Home() {
-  return <Welcome />;
+  const user = useAuthStore((s) => s.user);
+  return <Navigate to={user ? "/dashboard" : "/login"} replace />;
 }
