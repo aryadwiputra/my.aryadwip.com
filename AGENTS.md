@@ -25,7 +25,7 @@ npm run start      # Serve production build
 
 **Backend** (in `backend/`):
 ```bash
-bun run dev        # Hono dev server at http://localhost:3000
+npm run dev        # Hono dev server at http://localhost:3000 (Node via tsx watch)
 ```
 
 ## Quirks
@@ -34,7 +34,7 @@ bun run dev        # Hono dev server at http://localhost:3000
 - **Tailwind v4**: Uses `@import "tailwindcss"` and `@theme` block in CSS — NOT the v3 `@tailwind` directives. Don't add v3-style config.
 - **Routing**: Declarative via `app/routes.ts` — NOT file-system routing. Add new routes there.
 - **SSR enabled**: `react-router.config.ts` has `ssr: true`. Server components work; don't assume client-only.
-- **Backend is a stub**: `backend/src/index.ts` returns "Hello Hono!" at `/`. Not yet connected to frontend.
+- **Backend runtime is Node, not Bun**: Bun's prebuilt binary fails on this dev machine (CPU lacks AVX2). Backend runs Hono on Node via `@hono/node-server` + `tsx`. Use `npm`, not `bun`, for backend commands. DB is SQLite via `better-sqlite3`.
 
 ## Conventions
 

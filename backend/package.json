@@ -1,12 +1,36 @@
 {
   "name": "backend",
+  "type": "module",
   "scripts": {
-    "dev": "bun run --hot src/index.ts"
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "hono": "^4.13.2"
+    "@hono/node-server": "^2.1.1",
+    "@hono/zod-validator": "^0.9.0",
+    "bcryptjs": "^3.0.2",
+    "better-sqlite3": "^12.0.0",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.13.2",
+    "jose": "^6.2.9",
+    "nanoid": "^5.1.0",
+    "zod": "^3.25.0"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^22.0.0",
+    "drizzle-kit": "^0.31.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.3"
+  },
+  "allowScripts": {
+    "esbuild@0.18.20": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.2": true,
+    "better-sqlite3@12.11.1": true
   }
 }

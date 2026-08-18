@@ -1,8 +1,19 @@
 {
   "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022"],
     "strict": true,
-    "types": ["bun"],
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "types": ["node"],
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx"
-  }
+  },
+  "include": ["src"]
 }
