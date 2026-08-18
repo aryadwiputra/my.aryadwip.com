@@ -1,0 +1,80 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install backend deps
+        run: |
+          cd backend
+          npm install --no-audit --no-fund
+      - name: Typecheck backend
+        run: |
+          cd backend
+          npx tsc --noEmit
+      - name: Deploy backend to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          script: |
+            cd /var/www/my.aryadwip.com
+            sudo -u deploy git pull origin main
+            cd backend
+            sudo -u deploy npm install --no-audit --no-fund
+            sudo systemctl restart myaryadwip-api
+            sleep 2
+            if systemctl is-active --quiet myaryadwip-api; then
+              echo "✅ backend deployed"
+            else
+              echo "❌ backend failed"; exit 1
+            fi
+
+  frontend:
+    name: Frontend Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install frontend deps
+        run: |
+          cd frontend
+          npm install --no-audit --no-fund
+      - name: Typecheck frontend
+        run: |
+          cd frontend
+          npm run typecheck
+      - name: Deploy frontend to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          script: |
+            cd /var/www/my.aryadwip.com
+            sudo -u deploy git pull origin main
+            cd frontend
+            echo "VITE_API_URL=https://my.aryadwip.com" > .env
+            sudo -u deploy bash -c 'cd /var/www/my.aryadwip.com/frontend && rm -rf build node_modules/.vite && NODE_OPTIONS=--max-old-space-size=1536 npm run build'
+            sudo chown -R deploy:deploy /var/www/my.aryadwip.com/frontend/build
+            sudo systemctl restart myaryadwip-frontend
+            sleep 3
+            if systemctl is-active --quiet myaryadwip-frontend; then
+              echo "✅ frontend deployed"
+            else
+              echo "❌ frontend failed"; exit 1
+            fi
