@@ -1,10 +1,3 @@
-import { FeaturePlaceholder } from "~/components/FeaturePlaceholder";
+import SettingsPage from "../features/settings/SettingsPage";
 
-export default function SettingsPage() {
-  return (
-    <FeaturePlaceholder
-      name="Settings & Data"
-      description="Kelola profil, ekspor data, dan tema (lengkap di Sprint 08)."
-    />
-  );
-}
+export default SettingsPage;

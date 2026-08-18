@@ -15,6 +15,7 @@ import {
 import { useAuthStore } from "~/stores/auth";
 import { logout } from "~/lib/authService";
 import { NavItem, type NavItemDef } from "./NavItem";
+import { ThemeToggle } from "./ThemeToggle";
 import { QuickCaptureGlobal } from "~/features/ideas/components/QuickCapture";
 
 const nav: NavItemDef[] = [
@@ -48,12 +49,15 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             {user?.name}
           </span>
         </div>
-        <button
-          onClick={() => logout().then(() => window.location.assign("/login"))}
-          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-        >
-          <LogOut className="h-4 w-4" /> Keluar
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => logout().then(() => window.location.assign("/login"))}
+            className="flex flex-1 items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            <LogOut className="h-4 w-4" /> Keluar
+          </button>
+          <ThemeToggle />
+        </div>
       </div>
     </div>
   );

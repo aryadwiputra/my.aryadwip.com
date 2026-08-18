@@ -9,6 +9,7 @@ import ideas from "./routes/ideas";
 import notes from "./routes/notes";
 import sessions from "./routes/sessions";
 import dashboard from "./routes/dashboard";
+import settings from "./routes/settings";
 import type { AppEnv } from "./types";
 
 export function createApp() {
@@ -25,6 +26,7 @@ export function createApp() {
   app.route("/api/notes", notes);
   app.route("/api/sessions", sessions);
   app.route("/api/dashboard", dashboard);
+  app.route("/api/settings", settings);
 
   app.notFound((c) => c.json({ error: "NotFound", message: "Route tidak ditemukan" }, 404));
 

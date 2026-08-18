@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   isRouteErrorResponse,
   Links,
@@ -10,6 +11,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 
 import type { Route } from "./+types/root";
 import { queryClient } from "./lib/queryClient";
+import { initTheme } from "./lib/theme";
 import { Toaster } from "./components/ui/Toaster";
 import "./app.css";
 
@@ -27,6 +29,9 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    initTheme();
+  }, []);
   return (
     <html lang="en">
       <head>
