@@ -1,10 +1,3 @@
-import { FeaturePlaceholder } from "~/components/FeaturePlaceholder";
+import TimerPage from "../features/timer/TimerPage";
 
-export default function TimerPage() {
-  return (
-    <FeaturePlaceholder
-      name="Focus Timer"
-      description="Sesi kerja fokus (Pomodoro / Deep Work) dengan mode layar penuh."
-    />
-  );
-}
+export default TimerPage;

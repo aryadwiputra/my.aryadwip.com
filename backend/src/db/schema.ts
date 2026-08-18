@@ -79,7 +79,7 @@ export const focusSessions = sqliteTable("focus_sessions", {
   userId: text("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  taskId: text("task_id").references(() => tasks.id),
+  taskId: text("task_id"), // soft reference (task may be deleted later)
   duration: integer("duration"), // planned minutes
   startedAt: integer("started_at").notNull(),
   endedAt: integer("ended_at"),

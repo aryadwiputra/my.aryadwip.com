@@ -96,3 +96,28 @@ export interface NotePayload {
   source?: string;
   tags?: string[];
 }
+
+export type SessionStatus = "active" | "completed" | "cancelled";
+
+export interface FocusSession {
+  id: string;
+  taskId?: string | null;
+  duration: number; // planned minutes
+  startedAt: number;
+  endedAt?: number | null;
+  status: SessionStatus;
+  createdAt: number;
+}
+
+export interface TodaySummary {
+  sessions: FocusSession[];
+  focusMinutes: number;
+}
+
+export interface SessionStats {
+  todayMinutes: number;
+  weekMinutes: number;
+  todaySessions: number;
+  completedToday: number;
+  totalSessions: number;
+}

@@ -7,6 +7,7 @@ import journals from "./routes/journals";
 import tasks from "./routes/tasks";
 import ideas from "./routes/ideas";
 import notes from "./routes/notes";
+import sessions from "./routes/sessions";
 import type { AppEnv } from "./types";
 
 export function createApp() {
@@ -21,6 +22,7 @@ export function createApp() {
   app.route("/api/tasks", tasks);
   app.route("/api/ideas", ideas);
   app.route("/api/notes", notes);
+  app.route("/api/sessions", sessions);
 
   app.notFound((c) => c.json({ error: "NotFound", message: "Route tidak ditemukan" }, 404));
 

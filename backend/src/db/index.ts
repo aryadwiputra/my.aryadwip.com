@@ -86,7 +86,7 @@ export function ensureSchema() {
     CREATE TABLE IF NOT EXISTS focus_sessions (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      task_id TEXT REFERENCES tasks(id),
+      task_id TEXT,
       duration INTEGER,
       started_at INTEGER NOT NULL,
       ended_at INTEGER,
