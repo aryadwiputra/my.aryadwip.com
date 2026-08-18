@@ -1,38 +1,39 @@
-import { Navigate } from "react-router";
 import { useAuthStore } from "~/stores/auth";
-import { logout } from "~/lib/authService";
+import { Badge } from "~/components/ui/Badge";
 
-/**
- * Minimal protected route so the auth flow (login -> redirect) is verifiable
- * end-to-end. This is only a stub — S02 replaces it with the full UI shell,
- * sidebar navigation, and shared layout.
- */
 export default function DashboardPage() {
   const user = useAuthStore((s) => s.user);
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4 dark:border-gray-800 dark:bg-gray-900">
-        <div>
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Dashboard</h1>
-          <p className="text-sm text-gray-500">Selamat datang kembali, {user.name}</p>
-        </div>
-        <button
-          onClick={() => logout().then(() => window.location.assign("/login"))}
-          className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
-        >
-          Keluar
-        </button>
-      </header>
-      <div className="p-6">
-        <div className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-500 dark:border-gray-700 dark:text-gray-400">
-          Konten dashboard akan diisi pada Sprint 02 (UI Shell) &amp; S07 (Dashboard).
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Dashboard</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Selamat datang kembali, <span className="font-medium text-gray-700 dark:text-gray-200">{user?.name}</span>. Berikut snapshot aktivitas Anda hari ini.
+        </p>
       </div>
-    </main>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card value="0" label="Task selesai hari ini" />
+        <Card value="0m" label="Fokus hari ini" />
+        <Card value="0" label="Journal streak" />
+      </div>
+
+      <div className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-500 dark:border-gray-700 dark:text-gray-400">
+        <Badge>UI Shell Active</Badge>
+        <p className="mt-3 text-sm">
+          Konten dashboard disediakan di Sprint 07 (Dashboard &amp; Analytics).
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function Card({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <p className="text-2xl font-semibold text-gray-900 dark:text-white">{value}</p>
+      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{label}</p>
+    </div>
   );
 }
