@@ -121,3 +121,31 @@ export interface SessionStats {
   completedToday: number;
   totalSessions: number;
 }
+
+export interface Streak {
+  current: number;
+  longest: number;
+}
+
+export interface DashboardDay {
+  date: string;
+  label: string;
+  tasksCompleted: number;
+  focusMinutes: number;
+}
+
+export interface DashboardData {
+  today: {
+    pendingTasks: number;
+    completedToday: number;
+    focusMinutes: number;
+    journalDone: boolean;
+    journalMood?: string | null;
+  };
+  streaks: {
+    journal: Streak;
+    task: Streak;
+    focus: Streak;
+  };
+  week: DashboardDay[];
+}
