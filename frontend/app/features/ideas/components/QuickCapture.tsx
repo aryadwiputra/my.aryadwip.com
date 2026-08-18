@@ -8,8 +8,10 @@ import { useCaptureIdea } from "../hooks";
 
 export function QuickCapture({ open, onClose }: { open: boolean; onClose: () => void }) {
   const capture = useCaptureIdea();
-  const [text, setText] = useQuickCaptureStore((s) => [s.text, s.setText]);
-  const [submitting, setSubmitting] = useQuickCaptureStore((s) => [s.submitting, s.setSubmitting]);
+  const text = useQuickCaptureStore((s) => s.text);
+  const setText = useQuickCaptureStore((s) => s.setText);
+  const submitting = useQuickCaptureStore((s) => s.submitting);
+  const setSubmitting = useQuickCaptureStore((s) => s.setSubmitting);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
