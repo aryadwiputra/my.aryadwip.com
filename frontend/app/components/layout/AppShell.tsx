@@ -15,6 +15,7 @@ import {
 import { useAuthStore } from "~/stores/auth";
 import { logout } from "~/lib/authService";
 import { NavItem, type NavItemDef } from "./NavItem";
+import { QuickCaptureGlobal } from "~/features/ideas/components/QuickCapture";
 
 const nav: NavItemDef[] = [
   { to: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
@@ -107,6 +108,8 @@ export function AppShell() {
           <Outlet />
         </div>
       </main>
+
+      <QuickCaptureGlobal />
     </div>
   );
 }

@@ -15,3 +15,12 @@ export function formatDate(iso: string): string {
   const monthName = months[Number(m) - 1];
   return `${Number(d)} ${monthName} ${y}`;
 }
+
+export function formatDateTime(ts: number): string {
+  return new Date(ts).toLocaleString("id-ID", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}

@@ -1,10 +1,3 @@
-import { FeaturePlaceholder } from "~/components/FeaturePlaceholder";
+import IdeasPage from "../features/ideas/IdeasPage";
 
-export default function IdeasPage() {
-  return (
-    <FeaturePlaceholder
-      name="Idea Inbox"
-      description="Tangkap ide secara cepat lewat tombol floating atau Ctrl/Cmd+K."
-    />
-  );
-}
+export default IdeasPage;

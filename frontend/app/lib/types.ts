@@ -70,3 +70,29 @@ export interface TaskStats {
   completed: number;
   completedToday: number;
 }
+
+export type IdeaStatus = "inbox" | "converted" | "archived";
+
+export interface Idea {
+  id: string;
+  content: string;
+  status: IdeaStatus;
+  createdAt: number;
+}
+
+export interface Note {
+  id: string;
+  title: string;
+  content: string;
+  source?: string | null;
+  tags: string[];
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface NotePayload {
+  title: string;
+  content?: string;
+  source?: string;
+  tags?: string[];
+}
