@@ -90,6 +90,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
 export function AppShell() {
   const user = useAuthStore((s) => s.user);
+  const hydrated = useAuthStore((s) => s.hydrated);
   const location = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -113,6 +114,27 @@ export function AppShell() {
       delete (window as any).__claritySearch;
     };
   }, []);
+
+  // Fallback: if onRehydrateStorage never fired (e.g. empty localStorage),
+  // mark hydrated after mount anyway so we don't get stuck on a spinner.
+  useEffect(() => {
+    if (!hydrated) {
+      useAuthStore.getState().setHydrated(true);
+    }
+  }, [hydrated]);
+
+  // IMPORTANT: Only redirect after hydration. On SSR/first paint the store is
+  // not rehydrated from localStorage yet, so `user` is always null — redirecting
+  // then sends users to /login and (after hydrate) to /dashboard on every refresh.
+  if (!hydrated) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return <Navigate to="/login" replace />;
