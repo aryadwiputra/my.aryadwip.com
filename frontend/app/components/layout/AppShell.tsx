@@ -16,6 +16,7 @@ import { NavItem, type NavItemDef } from "./NavItem";
 import { ThemeToggle } from "./ThemeToggle";
 import { BottomNav } from "./BottomNav";
 import { MoreSheet } from "./MoreSheet";
+import { CreateSheet } from "~/features/shared/CreateSheet";
 import { QuickCaptureGlobal } from "~/features/ideas/components/QuickCapture";
 
 const nav: NavItemDef[] = [
@@ -112,6 +113,7 @@ export function AppShell() {
       {/* Mobile bottom nav */}
       <BottomNav onMore={() => setMoreOpen(true)} />
       <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} />
+      <CreateSheet />
 
       <QuickCaptureGlobal />
     </div>

@@ -1,9 +1,10 @@
 import { useEffect } from "react";
-import { Lightbulb } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "~/components/ui/Button";
 import { Modal } from "~/components/ui/Modal";
 import { toastError, toastSuccess } from "~/lib/toast";
 import { useQuickCaptureStore } from "../quickCaptureStore";
+import { useCreateStore } from "~/features/shared/createStore";
 import { useCaptureIdea } from "../hooks";
 
 export function QuickCapture({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -53,10 +54,11 @@ export function QuickCapture({ open, onClose }: { open: boolean; onClose: () => 
   );
 }
 
-/** Global quick-capture: Ctrl/Cmd+K shortcut + desktop FAB. */
+/** Global quick-capture: Ctrl/Cmd+K shortcut + desktop FAB (opens create sheet). */
 export function QuickCaptureGlobal() {
   const open = useQuickCaptureStore((s) => s.open);
   const setOpen = useQuickCaptureStore((s) => s.setOpen);
+  const setCreateOpen = useCreateStore((s) => s.setOpen);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -73,12 +75,12 @@ export function QuickCaptureGlobal() {
     <>
       <QuickCapture open={open} onClose={() => setOpen(false)} />
       <button
-        onClick={() => setOpen(true)}
-        aria-label="Tangkap ide cepat"
-        title="Tangkap ide (Ctrl+K)"
+        onClick={() => setCreateOpen(true)}
+        aria-label="Tambah"
+        title="Tambah (Ctrl+K)"
         className="fixed bottom-6 right-6 z-40 hidden h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition hover:bg-blue-700 lg:flex"
       >
-        <Lightbulb className="h-6 w-6" />
+        <Plus className="h-6 w-6" />
       </button>
     </>
   );

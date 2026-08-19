@@ -1,7 +1,7 @@
 import { NavLink } from "react-router";
-import { LayoutDashboard, BookOpen, CheckSquare, Lightbulb, MoreHorizontal } from "lucide-react";
+import { LayoutDashboard, BookOpen, CheckSquare, Plus, MoreHorizontal } from "lucide-react";
 import { cn } from "~/lib/cn";
-import { useQuickCaptureStore } from "~/features/ideas/quickCaptureStore";
+import { useCreateStore } from "~/features/shared/createStore";
 
 const leftItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -36,7 +36,7 @@ function NavItem({ to, label, icon: Icon }: { to: string; label: string; icon: t
 }
 
 export function BottomNav({ onMore }: { onMore: () => void }) {
-  const setOpen = useQuickCaptureStore((s) => s.setOpen);
+  const setOpen = useCreateStore((s) => s.setOpen);
 
   return (
     <nav
@@ -48,16 +48,16 @@ export function BottomNav({ onMore }: { onMore: () => void }) {
           <NavItem key={item.to} {...item} />
         ))}
 
-        {/* Center raised add-idea button (between Journal and Tasks) */}
+        {/* Center raised add button (between Journal and Tasks) */}
         <button
           onClick={() => setOpen(true)}
-          aria-label="Tambah ide"
+          aria-label="Tambah"
           className="relative flex flex-1 flex-col items-center"
         >
           <span className="-mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition hover:bg-blue-700">
-            <Lightbulb className="h-7 w-7" />
+            <Plus className="h-7 w-7" />
           </span>
-          <span className="mt-0.5 text-[11px] font-medium text-gray-500 dark:text-gray-400">Ide</span>
+          <span className="mt-0.5 text-[11px] font-medium text-gray-500 dark:text-gray-400">Tambah</span>
         </button>
 
         {rightItems.map((item) => (
