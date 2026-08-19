@@ -21,6 +21,7 @@ import { MoreSheet } from "./MoreSheet";
 import { CreateSheet } from "~/features/shared/CreateSheet";
 import { QuickCaptureGlobal } from "~/features/ideas/components/QuickCapture";
 import { SearchModal } from "~/features/search/SearchModal";
+import { SyncIndicator } from "./SyncIndicator";
 
 const nav: NavItemDef[] = [
   { to: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
@@ -156,6 +157,7 @@ export function AppShell() {
       <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} />
       <CreateSheet />
       <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <SyncIndicator />
 
       <QuickCaptureGlobal />
     </div>

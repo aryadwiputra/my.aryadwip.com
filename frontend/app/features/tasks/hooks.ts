@@ -1,6 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "~/lib/api";
 import type { Task, TaskPayload, TaskStats } from "~/lib/types";
+import {
+  addToQueue,
+  markSynced,
+  setLastSyncTime,
+  storeOfflineData,
+} from "~/lib/offlineStorage";
 
 export const taskKeys = {
   all: ["tasks"] as const,
@@ -12,6 +18,7 @@ export function useTasks() {
   return useQuery({
     queryKey: taskKeys.list,
     queryFn: () => api<{ tasks: Task[] }>("/api/tasks").then((d) => d.tasks),
+    staleTime: 1000 * 60 * 5,
   });
 }
 
@@ -19,6 +26,7 @@ export function useTaskStats() {
   return useQuery({
     queryKey: taskKeys.stats,
     queryFn: () => api<TaskStats>("/api/tasks/stats"),
+    staleTime: 1000 * 60 * 60,
   });
 }
 
@@ -28,64 +36,146 @@ function patchTaskInCache(qc: ReturnType<typeof useQueryClient>, id: string, pat
   );
 }
 
+/**
+ * Create task - works offline
+ */
 export function useCreateTask() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: TaskPayload) =>
-      api<{ task: Task }>("/api/tasks", { method: "POST", body: payload }).then((d) => d.task),
+    mutationFn: async (payload: TaskPayload) => {
+      try {
+        const res = await api<{ task: Task }>("/api/tasks", {
+          method: "POST",
+          body: payload,
+        });
+        setLastSyncTime();
+        return res.task;
+      } catch {
+        const offlineId = `offline-task-${Date.now()}-${Math.random()}`;
+        addToQueue({
+          id: offlineId,
+          type: "create",
+          entity: "task",
+          payload,
+          timestamp: Date.now(),
+          retryCount: 0,
+        });
+        storeOfflineData("task", payload);
+        return {
+          id: offlineId,
+          title: payload.title,
+          description: payload.description ?? null,
+          dueDate: payload.dueDate ?? null,
+          priority: payload.priority ?? "P2",
+          status: "todo",
+          tags: payload.tags ?? [],
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        } as Task;
+      }
+    },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: taskKeys.list });
-      qc.invalidateQueries({ queryKey: taskKeys.stats });
+      qc.invalidateQueries({ queryKey: taskKeys.all });
     },
   });
 }
 
+/**
+ * Update task - works offline
+ */
 export function useUpdateTask() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, ...payload }: TaskPayload & { id: string }) =>
-      api<{ task: Task }>(`/api/tasks/${id}`, { method: "PUT", body: payload }).then((d) => d.task),
+    mutationFn: async ({ id, ...payload }: { id: string } & Partial<TaskPayload>) => {
+      try {
+        const res = await api<{ task: Task }>(`/api/tasks/${id}`, {
+          method: "PUT",
+          body: payload,
+        });
+        markSynced(id, "task");
+        setLastSyncTime();
+        return res.task;
+      } catch {
+        addToQueue({
+          id: `offline-task-update-${id}-${Date.now()}`,
+          type: "update",
+          entity: "task",
+          payload: { id, ...payload },
+          timestamp: Date.now(),
+          retryCount: 0,
+        });
+        storeOfflineData(`task-${id}`, payload);
+        return { id, ...payload, updatedAt: Date.now() } as Task;
+      }
+    },
     onSettled: () => {
-      qc.invalidateQueries({ queryKey: taskKeys.list });
-      qc.invalidateQueries({ queryKey: taskKeys.stats });
+      qc.invalidateQueries({ queryKey: taskKeys.all });
     },
   });
 }
 
+/**
+ * Delete task - works offline
+ */
 export function useDeleteTask() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api(`/api/tasks/${id}`, { method: "DELETE" }),
+    mutationFn: async (id: string) => {
+      try {
+        await api(`/api/tasks/${id}`, { method: "DELETE" });
+        markSynced(id, "task");
+        setLastSyncTime();
+      } catch {
+        addToQueue({
+          id: `offline-task-delete-${id}-${Date.now()}`,
+          type: "delete",
+          entity: "task",
+          payload: { id },
+          timestamp: Date.now(),
+          retryCount: 0,
+        });
+      }
+    },
     onSettled: () => {
-      qc.invalidateQueries({ queryKey: taskKeys.list });
-      qc.invalidateQueries({ queryKey: taskKeys.stats });
+      qc.invalidateQueries({ queryKey: taskKeys.all });
     },
   });
 }
 
-/** Optimistically toggle a task between completed and todo. */
+/**
+ * Toggle task complete - works offline
+ */
 export function useToggleComplete() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, complete }: { id: string; complete: boolean }) =>
-      api<{ task: Task }>(`/api/tasks/${id}/${complete ? "complete" : "uncomplete"}`, {
-        method: "PATCH",
-      }).then((d) => d.task),
-    onMutate: async ({ id, complete }) => {
-      await qc.cancelQueries({ queryKey: taskKeys.list });
-      const prev = qc.getQueryData<Task[]>(taskKeys.list);
-      patchTaskInCache(qc, id, {
-        status: complete ? "completed" : "todo",
-        completedAt: complete ? Date.now() : null,
-      });
-      return { prev };
-    },
-    onError: (_err, _vars, ctx) => {
-      if (ctx?.prev) qc.setQueryData(taskKeys.list, ctx.prev);
+    mutationFn: async ({ id, complete }: { id: string; complete: boolean }) => {
+      try {
+        const res = await api<{ task: Task }>(
+          `/api/tasks/${id}/${complete ? "complete" : "uncomplete"}`,
+          { method: "PATCH" },
+        );
+        markSynced(id, "task");
+        setLastSyncTime();
+        return res.task;
+      } catch {
+        // Optimistic update
+        patchTaskInCache(qc, id, {
+          status: complete ? "completed" : "todo",
+          completedAt: complete ? Date.now() : null,
+        });
+        addToQueue({
+          id: `offline-task-toggle-${id}-${Date.now()}`,
+          type: "toggle",
+          entity: "task",
+          payload: { id, complete },
+          timestamp: Date.now(),
+          retryCount: 0,
+        });
+        return { id, status: complete ? "completed" : "todo", completedAt: complete ? Date.now() : null } as Task;
+      }
     },
     onSettled: () => {
-      qc.invalidateQueries({ queryKey: taskKeys.list });
-      qc.invalidateQueries({ queryKey: taskKeys.stats });
+      qc.invalidateQueries({ queryKey: taskKeys.all });
     },
   });
 }
