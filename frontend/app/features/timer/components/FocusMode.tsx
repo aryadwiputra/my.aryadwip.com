@@ -1,18 +1,7 @@
-import { useEffect, useState, useCallback, type ReactNode } from "react";
-import { X, Volume2, VolumeX, Wind } from "lucide-react";
-import {
-  AMBIENT_TYPES,
-  MURATTAL_SURAHS,
-  isAmbientOn,
-  isMurattalPlaying,
-  setAmbientType,
-  startAmbient,
-  startMurattal,
-  stopAll,
-  stopAmbient,
-  stopMurattal,
-  type AmbientType,
-} from "../ambient";
+import { useEffect, useCallback, type ReactNode } from "react";
+import { X } from "lucide-react";
+import { stopAll } from "../ambient";
+import { AmbiencePanel } from "./AmbiencePanel";
 
 interface FocusModeProps {
   onExit: () => void;
@@ -58,13 +47,6 @@ function isFullscreen(): boolean {
 }
 
 export function FocusMode({ onExit, children, taskName }: FocusModeProps) {
-  const [ambient, setAmbient] = useState(false);
-  const [ambientType, setAmbientTypeState] = useState<AmbientType>("rain");
-  const [murattal, setMurattal] = useState(false);
-  const [murattalSurah, setMurattalSurah] = useState("055");
-  const [breathGuide, setBreathGuide] = useState(false);
-  const [fsError, setFsError] = useState(false);
-
   const handleExit = useCallback(() => {
     stopAll();
     if (isFullscreen()) exitFullscreen();
@@ -74,9 +56,7 @@ export function FocusMode({ onExit, children, taskName }: FocusModeProps) {
   useEffect(() => {
     const el = document.getElementById("focus-mode-root");
     if (el) {
-      enterFullscreen(el).then((ok) => {
-        if (!ok) setFsError(true);
-      });
+      enterFullscreen(el);
     }
     return () => {
       stopAll();
@@ -94,51 +74,14 @@ export function FocusMode({ onExit, children, taskName }: FocusModeProps) {
 
   useEffect(() => {
     function onChange() {
-      if (!isFullscreen() && !fsError) {
+      if (!isFullscreen()) {
         stopAll();
         onExit();
       }
     }
     document.addEventListener("fullscreenchange", onChange);
     return () => document.removeEventListener("fullscreenchange", onChange);
-  }, [onExit, fsError]);
-
-  function toggleNature(t: AmbientType) {
-    setAmbientTypeState(t);
-    setAmbientType(t);
-    if (murattal) {
-      stopMurattal();
-      setMurattal(false);
-    }
-    if (isAmbientOn()) {
-      stopAmbient();
-      startAmbient(t);
-    } else {
-      startAmbient(t);
-      setAmbient(true);
-    }
-  }
-
-  function toggleMurattal() {
-    if (isMurattalPlaying()) {
-      stopMurattal();
-      setMurattal(false);
-      return;
-    }
-    if (isAmbientOn()) {
-      stopAmbient();
-      setAmbient(false);
-    }
-    startMurattal(murattalSurah);
-    setMurattal(true);
-  }
-
-  function selectMurattalSurah(s: string) {
-    setMurattalSurah(s);
-    if (isMurattalPlaying()) {
-      startMurattal(s);
-    }
-  }
+  }, [onExit]);
 
   return (
     <div id="focus-mode-root" className="fixed inset-0 z-50 flex flex-col bg-gray-950">
@@ -150,123 +93,25 @@ export function FocusMode({ onExit, children, taskName }: FocusModeProps) {
             <p className="truncate text-sm font-medium text-gray-300">{taskName}</p>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleExit}
-            aria-label="Keluar dari mode fokus"
-            className="flex items-center gap-1.5 rounded-full border border-gray-700 px-3 py-1.5 text-sm text-gray-300 transition hover:bg-gray-800 hover:text-white"
-          >
-            <X className="h-4 w-4" />
-            Keluar
-          </button>
-        </div>
+        <button
+          onClick={handleExit}
+          aria-label="Keluar dari mode fokus"
+          className="flex items-center gap-1.5 rounded-full border border-gray-700 px-3 py-1.5 text-sm text-gray-300 transition hover:bg-gray-800 hover:text-white"
+        >
+          <X className="h-4 w-4" />
+          Keluar
+        </button>
       </div>
 
       {/* Timer centered */}
       <div className="flex flex-1 items-center justify-center px-4">{children}</div>
 
-      {/* Ambience controls */}
+      {/* Ambience controls (reusable panel) */}
       <div className="mx-auto w-full max-w-lg px-4 pb-[max(env(safe-area-inset-bottom),1rem)]">
-        {/* Nature sounds grid */}
-        <div className="mb-2 flex flex-wrap items-center justify-center gap-1.5">
-          {AMBIENT_TYPES.map((a) => (
-            <button
-              key={a.type}
-              onClick={() => toggleNature(a.type)}
-              className={`rounded-full border px-2.5 py-1 text-xs transition ${
-                ambientType === a.type && ambient
-                  ? "border-blue-500 bg-blue-600 text-white"
-                  : "border-gray-700 text-gray-300 hover:border-blue-500 hover:text-white"
-              }`}
-            >
-              {a.emoji} {a.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Murattal + breath */}
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <button
-            onClick={toggleMurattal}
-            className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition ${
-              murattal
-                ? "border-emerald-500 bg-emerald-600 text-white"
-                : "border-gray-700 text-gray-300 hover:border-emerald-500 hover:text-white"
-            }`}
-          >
-            <Volume2 className="h-3.5 w-3.5" />
-            {murattal ? "Murattal On" : "Murattal"}
-          </button>
-          <select
-            value={murattalSurah}
-            onChange={(e) => selectMurattalSurah(e.target.value)}
-            className="rounded-full border border-gray-700 bg-gray-900 px-2 py-1.5 text-xs text-gray-300"
-            aria-label="Pilih surah"
-          >
-            {MURATTAL_SURAHS.map((s) => (
-              <option key={s.num} value={s.num}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={() => setBreathGuide((v) => !v)}
-            className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition ${
-              breathGuide
-                ? "border-teal-500 bg-teal-600 text-white"
-                : "border-gray-700 text-gray-300 hover:border-teal-500 hover:text-white"
-            }`}
-          >
-            <Wind className="h-3.5 w-3.5" />
-            {breathGuide ? "Napas On" : "Napas 4-4-4-4"}
-          </button>
-        </div>
-
-        {/* Breath guide visual */}
-        {breathGuide && <BreathGuide />}
-
+        <AmbiencePanel />
         <p className="mt-2 text-center text-xs text-gray-600">
           Tekan <span className="rounded bg-gray-800 px-1.5 py-0.5 text-gray-400">Esc</span> untuk keluar
         </p>
-      </div>
-    </div>
-  );
-}
-
-// Box breathing 4-4-4-4 visual guide (no audio).
-function BreathGuide() {
-  const [phase, setPhase] = useState<"inhale" | "hold" | "exhale">("inhale");
-  const [scale, setScale] = useState(0.6);
-
-  useEffect(() => {
-    let t: ReturnType<typeof setTimeout>;
-    const cycle = () => {
-      setPhase("inhale");
-      setScale(0.6);
-      t = setTimeout(() => {
-        setPhase("hold");
-        setScale(1);
-        t = setTimeout(() => {
-          setPhase("exhale");
-          setScale(0.6);
-          t = setTimeout(cycle, 4000);
-        }, 4000);
-      }, 4000);
-    };
-    cycle();
-    return () => clearTimeout(t);
-  }, []);
-
-  const label =
-    phase === "inhale" ? "Tarik napas 4 detik" : phase === "hold" ? "Tahan 4 detik" : "Hembuskan 4 detik";
-
-  return (
-    <div className="mt-3 flex flex-col items-center">
-      <div
-        className="flex h-24 w-24 items-center justify-center rounded-full bg-teal-600/20 text-teal-300 transition-all duration-[4000ms] ease-in-out"
-        style={{ transform: `scale(${scale})` }}
-      >
-        <span className="text-xs font-medium">{label}</span>
       </div>
     </div>
   );

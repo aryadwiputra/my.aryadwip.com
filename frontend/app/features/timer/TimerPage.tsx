@@ -11,6 +11,7 @@ import { computeFocusStreak, computeDeepWorkScore, focusStreakLabel } from "./fo
 import { useTimerStore } from "./timerStore";
 import { Timer } from "./components/Timer";
 import { FocusMode } from "./components/FocusMode";
+import { AmbiencePanel } from "./components/AmbiencePanel";
 
 function statCard(value: string, label: string) {
   return (
@@ -165,6 +166,14 @@ export default function TimerPage() {
       {/* Timer */}
       <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-8 dark:border-gray-800 dark:bg-gray-900">
         {timer}
+      </div>
+
+      {/* Ambience (non-fullscreen mode) */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+        <p className="mb-3 text-center text-sm font-medium text-gray-700 dark:text-gray-300">
+          🎧 Ambience
+        </p>
+        <AmbiencePanel compact />
       </div>
 
       {/* FocusMode overlay — wraps the SAME timer instance (shared store state) */}

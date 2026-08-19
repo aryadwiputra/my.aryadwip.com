@@ -95,6 +95,43 @@ export function getAmbientType(): AmbientType {
   return currentType;
 }
 
+const TYPE_KEY = "clarityflow_ambient_type";
+const MURATTAL_KEY = "clarityflow_murattal_surah";
+
+export function loadSavedType(): AmbientType {
+  try {
+    const raw = localStorage.getItem(TYPE_KEY);
+    if (raw && AMBIENT_TYPES.some((a) => a.type === raw)) return raw as AmbientType;
+  } catch {
+    /* ignore */
+  }
+  return "rain";
+}
+
+export function saveType(t: AmbientType) {
+  try {
+    localStorage.setItem(TYPE_KEY, t);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function loadSavedSurah(): string {
+  try {
+    return localStorage.getItem(MURATTAL_KEY) ?? "055";
+  } catch {
+    return "055";
+  }
+}
+
+export function saveSurah(s: string) {
+  try {
+    localStorage.setItem(MURATTAL_KEY, s);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function setAmbientType(t: AmbientType) {
   currentType = t;
   if (active && !isMurattalPlaying()) {

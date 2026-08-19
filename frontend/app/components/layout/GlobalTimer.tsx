@@ -1,11 +1,18 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router";
-import { Play, Pause, Timer as TimerIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router";
+import { Play, Pause, Timer as TimerIcon, Volume2 } from "lucide-react";
 import { toastSuccess } from "~/lib/toast";
 import { useTimerStore } from "~/features/timer/timerStore";
 import { useEndSession, fetchActiveSession } from "~/features/timer/hooks";
 import { FocusJournalPrompt } from "~/features/timer/components/FocusJournalPrompt";
 import { BreakPrompt } from "~/features/timer/components/BreakPrompt";
+import {
+  AMBIENT_TYPES,
+  getAmbientType,
+  isAmbientOn,
+  isMurattalPlaying,
+  stopAll,
+} from "~/features/timer/ambient";
 
 function format(ms: number) {
   const totalSec = Math.max(0, Math.ceil(ms / 1000));
@@ -37,6 +44,7 @@ function notify(title: string, body?: string) {
  */
 export function GlobalTimer() {
   const navigate = useNavigate();
+  const location = useLocation();
   const endSession = useEndSession();
 
   const running = useTimerStore((s) => s.running);
@@ -47,6 +55,32 @@ export function GlobalTimer() {
   const pendingBreak = useTimerStore((s) => s.pendingBreakPrompt);
   const pause = useTimerStore((s) => s.pause);
   const start = useTimerStore((s) => s.start);
+
+  // Poll ambient/murattal state (global module) for the cross-page indicator.
+  const [ambienceActive, setAmbienceActive] = useState(false);
+  const [ambienceLabel, setAmbienceLabel] = useState("");
+  useEffect(() => {
+    const refresh = () => {
+      const murattalOn = isMurattalPlaying();
+      if (murattalOn) {
+        setAmbienceActive(true);
+        setAmbienceLabel("Murattal Al-Qur'an");
+      } else if (isAmbientOn()) {
+        const t = getAmbientType();
+        const info = AMBIENT_TYPES.find((a) => a.type === t);
+        setAmbienceActive(true);
+        setAmbienceLabel(`${info?.emoji ?? ""} ${info?.label ?? t}`);
+      } else {
+        setAmbienceActive(false);
+        setAmbienceLabel("");
+      }
+    };
+    refresh();
+    const id = setInterval(refresh, 2000);
+    return () => clearInterval(id);
+  }, []);
+
+  const onTimerPage = location.pathname.startsWith("/timer");
 
   // Global completion handler: registered once, survives navigation.
   useEffect(() => {
@@ -115,6 +149,19 @@ export function GlobalTimer() {
           >
             {running ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
           </span>
+        </button>
+      )}
+
+      {/* Ambience indicator — visible on any page except /timer (has its own panel) */}
+      {ambienceActive && !onTimerPage && (
+        <button
+          onClick={() => stopAll()}
+          title="Hentikan ambience"
+          className="fixed bottom-40 right-4 z-40 flex items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-lg transition hover:border-red-400 hover:text-red-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 lg:bottom-24 lg:right-6"
+        >
+          <Volume2 className="h-3.5 w-3.5 text-emerald-500" />
+          {ambienceLabel}
+          <span className="text-gray-400">✕</span>
         </button>
       )}
 
