@@ -14,7 +14,30 @@ export function useIdeas(status: IdeaStatus = "inbox") {
   return useQuery({
     queryKey: ideaKeys.list(status),
     queryFn: () => api<{ ideas: Idea[] }>(`/api/ideas${params}`).then((d) => d.ideas),
+    // Always refetch fresh when the page mounts.
+    staleTime: 0,
+    refetchOnMount: true,
   });
+}
+
+/** Optimistically upsert an idea in all idea list caches. */
+function upsertIdeaInCache(qc: ReturnType<typeof useQueryClient>, idea: Idea) {
+  qc.setQueriesData({ queryKey: ideaKeys.all }, (old: Idea[] | undefined) => {
+    const list = old ?? [];
+    const idx = list.findIndex((i) => i.id === idea.id);
+    if (idx >= 0) {
+      const next = [...list];
+      next[idx] = idea;
+      return next;
+    }
+    return [idea, ...list];
+  });
+}
+
+function removeIdeaFromCache(qc: ReturnType<typeof useQueryClient>, id: string) {
+  qc.setQueriesData({ queryKey: ideaKeys.all }, (old: Idea[] | undefined) =>
+    (old ?? []).filter((i) => i.id !== id),
+  );
 }
 
 export function useCaptureIdea() {
@@ -22,7 +45,10 @@ export function useCaptureIdea() {
   return useMutation({
     mutationFn: (content: string) =>
       api<{ idea: Idea }>("/api/ideas", { method: "POST", body: { content } }).then((d) => d.idea),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ideaKeys.all }),
+    onSuccess: (idea) => {
+      upsertIdeaInCache(qc, idea);
+      qc.invalidateQueries({ queryKey: ideaKeys.all });
+    },
   });
 }
 
@@ -31,7 +57,10 @@ export function useUpdateIdea() {
   return useMutation({
     mutationFn: ({ id, content }: { id: string; content: string }) =>
       api<{ idea: Idea }>(`/api/ideas/${id}`, { method: "PUT", body: { content } }).then((d) => d.idea),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ideaKeys.all }),
+    onSuccess: (idea) => {
+      upsertIdeaInCache(qc, idea);
+      qc.invalidateQueries({ queryKey: ideaKeys.all });
+    },
   });
 }
 
@@ -39,7 +68,10 @@ export function useDeleteIdea() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api(`/api/ideas/${id}`, { method: "DELETE" }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ideaKeys.all }),
+    onSuccess: (_data, id) => {
+      removeIdeaFromCache(qc, id);
+      qc.invalidateQueries({ queryKey: ideaKeys.all });
+    },
   });
 }
 
@@ -48,7 +80,8 @@ export function useConvertToTask() {
   return useMutation({
     mutationFn: (id: string) =>
       api<{ task: Task }>(`/api/ideas/${id}/convert-to-task`, { method: "POST" }).then((d) => d.task),
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
+      removeIdeaFromCache(qc, id);
       qc.invalidateQueries({ queryKey: ideaKeys.all });
       qc.invalidateQueries({ queryKey: taskKeys.all });
     },
@@ -60,7 +93,8 @@ export function useConvertToNote() {
   return useMutation({
     mutationFn: (id: string) =>
       api<{ note: Note }>(`/api/ideas/${id}/convert-to-note`, { method: "POST" }).then((d) => d.note),
-    onSuccess: () => {
+    onSuccess: (_data, id) => {
+      removeIdeaFromCache(qc, id);
       qc.invalidateQueries({ queryKey: ideaKeys.all });
       qc.invalidateQueries({ queryKey: noteKeys.all });
     },
