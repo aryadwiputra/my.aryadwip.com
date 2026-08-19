@@ -1,4 +1,4 @@
-const CACHE = "clarityflow-vdaba3ab";
+const CACHE = "clarityflow-__CACHE_VERSION__";
 const ASSETS = ["/", "/manifest.webmanifest", "/icon.svg"];
 
 self.addEventListener("install", (event) => {
