@@ -51,8 +51,17 @@ export function GlobalTimer() {
   // Global completion handler: registered once, survives navigation.
   useEffect(() => {
     useTimerStore.getState().setOnComplete((sid, mins) => {
-      if (sid) {
-        endSession.mutate({ id: sid, status: "completed" });
+      const { isBreak } = useTimerStore.getState();
+      // A break ending should NOT hit the backend (client-only) nor count as a pomodoro.
+      if (!isBreak) {
+        if (sid) {
+          endSession.mutate({ id: sid, status: "completed" });
+        }
+        useTimerStore.getState().incrementPomodoro();
+      }
+      if (isBreak) {
+        toastSuccess("Istirahat selesai! Siap fokus lagi? 💪");
+        return; // no journal/break offer after a break
       }
       toastSuccess(`Sesi ${mins} menit selesai! Istirahat sejenak. 💪`);
       notify(`Fokus ${mins} menit selesai! 🎉`, "Istirahat sejenak dan regangkan badan.");

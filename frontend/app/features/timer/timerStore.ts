@@ -14,6 +14,8 @@ interface TimerStore {
   custom: string;
   sessionId: string | null;
   overlay: boolean;
+  isBreak: boolean; // true when running a break (client-only, not counted in stats)
+  pomodoroCount: number; // completed focus sessions today (drives long-break cadence)
   pendingJournalPrompt: number | null; // minutes of a just-finished session, to show journal prompt anywhere
   pendingBreakPrompt: boolean; // true to offer a break after a finished session
   onOneMinute: (() => void) | null;
@@ -23,6 +25,9 @@ interface TimerStore {
   setRunning: (r: boolean) => void;
   setSessionId: (id: string | null) => void;
   setOverlay: (v: boolean) => void;
+  setIsBreak: (b: boolean) => void;
+  incrementPomodoro: () => void;
+  setPomodoroCount: (n: number) => void;
   setPendingJournalPrompt: (v: number | null) => void;
   setPendingBreakPrompt: (v: boolean) => void;
   setOnOneMinute: (fn: (() => void) | null) => void;
@@ -47,6 +52,8 @@ export const useTimerStore = create<TimerStore>()(
       custom: "",
       sessionId: null,
       overlay: false,
+      isBreak: false,
+      pomodoroCount: 0,
       pendingJournalPrompt: null,
       pendingBreakPrompt: false,
       onOneMinute: null,
@@ -64,6 +71,9 @@ export const useTimerStore = create<TimerStore>()(
       setRunning: (r) => set({ running: r }),
       setSessionId: (id) => set({ sessionId: id }),
       setOverlay: (v) => set({ overlay: v }),
+      setIsBreak: (b) => set({ isBreak: b }),
+      incrementPomodoro: () => set((s) => ({ pomodoroCount: s.pomodoroCount + 1 })),
+      setPomodoroCount: (n) => set({ pomodoroCount: n }),
       setPendingJournalPrompt: (v) => set({ pendingJournalPrompt: v }),
       setPendingBreakPrompt: (v) => set({ pendingBreakPrompt: v }),
       setOnOneMinute: (fn) => set({ onOneMinute: fn }),

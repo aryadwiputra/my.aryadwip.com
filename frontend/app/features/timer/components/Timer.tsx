@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Pause, Play, RotateCcw, Check, Flag } from "lucide-react";
+import { Pause, Play, RotateCcw, Flag, X } from "lucide-react";
 import { Button } from "~/components/ui/Button";
 import { cn } from "~/lib/cn";
 import { toastError, toastSuccess } from "~/lib/toast";
@@ -81,6 +81,14 @@ export function Timer({ taskId, onComplete, variant = "default" }: TimerProps) {
     setCustomPresets(loadCustomPresets());
   }, []);
 
+  function removeCustomPreset(m: number) {
+    setCustomPresets((prev) => {
+      const next = prev.filter((x) => x !== m);
+      saveCustomPresets(next);
+      return next;
+    });
+  }
+
   // Keyboard shortcuts (#7): Space=start/pause, R=reset (skip when typing).
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -121,6 +129,7 @@ export function Timer({ taskId, onComplete, variant = "default" }: TimerProps) {
         startedAt: Date.now(),
         remainingMs: minutes * 60_000,
         running: false,
+        isBreak: false, // starting a real focus session resets break mode
       });
       start();
     } catch (err) {
@@ -130,6 +139,8 @@ export function Timer({ taskId, onComplete, variant = "default" }: TimerProps) {
   }
 
   async function handleReset() {
+    // Confirm before discarding an in-progress session (#5).
+    if (sessionId && !confirm("Yakin reset sesi yang sedang berjalan? Sesi akan dibatalkan.")) return;
     reset();
     if (sessionId) {
       try {
@@ -249,11 +260,10 @@ export function Timer({ taskId, onComplete, variant = "default" }: TimerProps) {
           </button>
         ))}
         {customPresets.map((m) => (
-          <button
+          <div
             key={`c-${m}`}
-            onClick={() => selectMinutes(m)}
             className={cn(
-              "rounded-lg border border-dashed px-4 py-2 text-sm font-medium transition",
+              "group flex items-center gap-1 rounded-lg border border-dashed px-3 py-2 text-sm font-medium transition",
               minutes === m && !custom
                 ? "border-blue-600 bg-blue-600 text-white"
                 : onDark
@@ -261,8 +271,16 @@ export function Timer({ taskId, onComplete, variant = "default" }: TimerProps) {
                   : "border-gray-300 text-gray-500 hover:border-blue-500 dark:border-gray-700 dark:text-gray-400",
             )}
           >
-            {m} min
-          </button>
+            <button onClick={() => selectMinutes(m)}>{m} min</button>
+            <button
+              onClick={() => removeCustomPreset(m)}
+              aria-label={`Hapus preset ${m} menit`}
+              title="Hapus preset"
+              className="flex h-4 w-4 items-center justify-center rounded-full opacity-0 transition group-hover:opacity-100 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/40"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
         ))}
         <input
           value={custom}
