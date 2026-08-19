@@ -1,5 +1,6 @@
 import { Button } from "~/components/ui/Button";
 import { Skeleton } from "~/components/ui/Skeleton";
+import { RefreshCw } from "lucide-react";
 import { formatDate, todayStr } from "~/lib/date";
 import { useAuthStore } from "~/stores/auth";
 import { SnapshotCard } from "./components/SnapshotCard";
@@ -36,8 +37,15 @@ export default function DashboardPage() {
             {formatDate(todayStr())} — teruskan progress 1% setiap hari.
           </p>
         </div>
-        <Button variant="secondary" onClick={refresh} loading={isRefetching} className="shrink-0">
-          Muat Ulang
+        <Button
+          variant="secondary"
+          onClick={refresh}
+          loading={isRefetching}
+          className="shrink-0"
+          aria-label="Muat ulang"
+          title="Muat ulang"
+        >
+          <RefreshCw className="h-4 w-4" />
         </Button>
       </div>
 

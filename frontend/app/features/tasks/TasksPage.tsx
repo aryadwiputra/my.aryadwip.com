@@ -72,8 +72,8 @@ export default function TasksPage() {
             Kelola semua pekerjaanmu di satu tempat.
           </p>
         </div>
-        <Button onClick={openCreate}>
-          <Plus className="h-4 w-4" /> Task Baru
+        <Button onClick={openCreate} aria-label="Task Baru" title="Task Baru">
+          <Plus className="h-4 w-4" />
         </Button>
       </div>
 

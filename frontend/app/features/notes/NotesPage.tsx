@@ -61,8 +61,8 @@ export default function NotesPage() {
             Simpan insight dari buku dan artikel.
           </p>
         </div>
-        <Button onClick={openCreate}>
-          <Plus className="h-4 w-4" /> Note Baru
+        <Button onClick={openCreate} aria-label="Note Baru" title="Note Baru">
+          <Plus className="h-4 w-4" />
         </Button>
       </div>
 

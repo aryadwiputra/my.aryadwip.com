@@ -49,9 +49,14 @@ export default function TimerPage() {
             Blok kerja fokus untuk deep work.
           </p>
         </div>
-        <Button variant="secondary" onClick={() => setFocusMode(true)} className="shrink-0">
-          <Maximize2 className="h-4 w-4" /> <span className="hidden sm:inline">Mode Fokus</span>
-          <span className="sm:hidden">Fokus</span>
+        <Button
+          variant="secondary"
+          onClick={() => setFocusMode(true)}
+          className="shrink-0"
+          aria-label="Mode Fokus"
+          title="Mode Fokus"
+        >
+          <Maximize2 className="h-4 w-4" />
         </Button>
       </div>
 

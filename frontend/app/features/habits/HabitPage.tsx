@@ -68,9 +68,8 @@ export default function HabitPage() {
             Bangun kebiasaan kecil setiap hari.
           </p>
         </div>
-        <Button onClick={() => setOpen(true)} className="shrink-0">
-          <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Habit Baru</span>
-          <span className="sm:hidden">Baru</span>
+        <Button onClick={() => setOpen(true)} className="shrink-0" aria-label="Habit Baru" title="Habit Baru">
+          <Plus className="h-4 w-4" />
         </Button>
       </div>
 
