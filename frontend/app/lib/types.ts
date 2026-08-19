@@ -148,6 +148,16 @@ export interface DashboardData {
     focus: Streak;
   };
   week: DashboardDay[];
+  moodTrend: { date: string; mood: string; energy: number | null }[];
+  stats: {
+    totalTasks: number;
+    completedTasks: number;
+    completionRate: number;
+    totalSessions: number;
+    totalFocusMinutes: number;
+    totalJournals: number;
+    totalHabits: number;
+  };
 }
 
 export interface Habit {

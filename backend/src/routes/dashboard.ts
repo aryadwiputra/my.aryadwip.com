@@ -4,7 +4,7 @@ import { zValidator } from "@hono/zod-validator";
 import { eq, and } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { db } from "../db";
-import { journals as journalsTable, tasks as tasksTable, focusSessions as sessionsTable, weeklyReviews as reviewsTable } from "../db/schema";
+import { journals as journalsTable, tasks as tasksTable, focusSessions as sessionsTable, weeklyReviews as reviewsTable, habits as habitsTable } from "../db/schema";
 import { authMiddleware } from "../middleware/auth";
 import type { AppEnv } from "../types";
 
@@ -100,6 +100,24 @@ dashboard.get("/", (c) => {
     week.push({ date: key, label: key.slice(5), tasksCompleted: taskCount, focusMinutes: focMin });
   }
 
+  // Mood trend (last 30 days)
+  const moodTrend: { date: string; mood: string; energy: number | null }[] = journals
+    .filter((j) => {
+      const jDate = new Date(j.date + "T00:00:00").getTime();
+      return jDate >= todayStart - 30 * 24 * 60 * 60 * 1000;
+    })
+    .map((j) => ({ date: j.date, mood: j.mood ?? "okay", energy: j.energy }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  // Stats summary
+  const totalTasks = tasks.length;
+  const completedTasks = tasks.filter((t) => t.status === "completed").length;
+  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const totalSessions = sessions.filter((s) => s.status === "completed").length;
+  const totalFocusMinutes = Math.round(sessions.filter((s) => s.status === "completed").reduce((sum, s) => sum + ((s.endedAt ?? s.startedAt) - s.startedAt) / 60000, 0));
+  const totalJournals = journals.length;
+  const totalHabits = db.select({ count: habitsTable.id }).from(habitsTable).where(eq(habitsTable.userId, userId)).all().length;
+
   return c.json(
     {
       today: {
@@ -111,6 +129,16 @@ dashboard.get("/", (c) => {
       },
       streaks,
       week,
+      moodTrend,
+      stats: {
+        totalTasks,
+        completedTasks,
+        completionRate,
+        totalSessions,
+        totalFocusMinutes,
+        totalJournals,
+        totalHabits,
+      },
     },
     200,
   );
