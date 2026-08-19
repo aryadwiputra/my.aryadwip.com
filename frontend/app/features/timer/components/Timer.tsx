@@ -1,12 +1,31 @@
-import { useEffect } from "react";
-import { Pause, Play, RotateCcw } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Pause, Play, RotateCcw, Check, Flag } from "lucide-react";
 import { Button } from "~/components/ui/Button";
 import { cn } from "~/lib/cn";
-import { toastError } from "~/lib/toast";
+import { toastError, toastSuccess } from "~/lib/toast";
 import { useTimerStore } from "../timerStore";
 import { useEndSession, useStartSession } from "../hooks";
 
 const PRESETS = [25, 50, 90];
+const CUSTOM_PRESETS_KEY = "clarityflow_custom_presets";
+
+function loadCustomPresets(): number[] {
+  try {
+    const raw = localStorage.getItem(CUSTOM_PRESETS_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr.filter((n) => typeof n === "number" && n > 0 && n <= 600).slice(0, 4) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCustomPresets(list: number[]) {
+  try {
+    localStorage.setItem(CUSTOM_PRESETS_KEY, JSON.stringify(list));
+  } catch {
+    /* ignore */
+  }
+}
 
 function format(ms: number) {
   const totalSec = Math.max(0, Math.ceil(ms / 1000));
@@ -56,6 +75,28 @@ export function Timer({ taskId, onComplete, variant = "default" }: TimerProps) {
   const start = useTimerStore((s) => s.start);
   const pause = useTimerStore((s) => s.pause);
   const reset = useTimerStore((s) => s.reset);
+
+  const [customPresets, setCustomPresets] = useState<number[]>([]);
+  useEffect(() => {
+    setCustomPresets(loadCustomPresets());
+  }, []);
+
+  // Keyboard shortcuts (#7): Space=start/pause, R=reset (skip when typing).
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const t = document.activeElement?.tagName;
+      if (t === "INPUT" || t === "TEXTAREA" || t === "SELECT") return;
+      if (e.code === "Space") {
+        e.preventDefault();
+        handleStart();
+      } else if (e.key === "r" || e.key === "R") {
+        handleReset();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [running, sessionId, minutes]);
 
   const totalMs = minutes * 60_000;
   const progress = totalMs > 0 ? 1 - remainingMs / totalMs : 0;
@@ -115,6 +156,30 @@ export function Timer({ taskId, onComplete, variant = "default" }: TimerProps) {
       return;
     }
     selectMinutes(n);
+    // Save as a reusable custom preset (dedupe, cap at 4).
+    setCustomPresets((prev) => {
+      const next = [n, ...prev.filter((x) => x !== n)].slice(0, 4);
+      saveCustomPresets(next);
+      return next;
+    });
+    toastSuccess(`Durasi ${n} menit disimpan sebagai preset`);
+  }
+
+  // Manual finish (#9): complete the current session right now.
+  async function handleFinishNow() {
+    if (!sessionId) {
+      toastError("Tidak ada sesi yang berjalan");
+      return;
+    }
+    const sid = sessionId;
+    reset();
+    try {
+      await endMutation.mutateAsync({ id: sid, status: "completed" });
+      toastSuccess("Sesi selesai!");
+    } catch {
+      /* ignore */
+    }
+    setSessionId(null);
   }
 
   const radius = 90;
@@ -166,7 +231,7 @@ export function Timer({ taskId, onComplete, variant = "default" }: TimerProps) {
       </div>
 
       {/* Presets + custom */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-center gap-2">
         {PRESETS.map((m) => (
           <button
             key={m}
@@ -178,6 +243,22 @@ export function Timer({ taskId, onComplete, variant = "default" }: TimerProps) {
                 : onDark
                   ? "border-gray-700 text-gray-300 hover:border-blue-500"
                   : "border-gray-300 text-gray-700 hover:border-blue-500 dark:border-gray-700 dark:text-gray-200",
+            )}
+          >
+            {m} min
+          </button>
+        ))}
+        {customPresets.map((m) => (
+          <button
+            key={`c-${m}`}
+            onClick={() => selectMinutes(m)}
+            className={cn(
+              "rounded-lg border border-dashed px-4 py-2 text-sm font-medium transition",
+              minutes === m && !custom
+                ? "border-blue-600 bg-blue-600 text-white"
+                : onDark
+                  ? "border-gray-700 text-gray-400 hover:border-blue-500"
+                  : "border-gray-300 text-gray-500 hover:border-blue-500 dark:border-gray-700 dark:text-gray-400",
             )}
           >
             {m} min
@@ -200,12 +281,17 @@ export function Timer({ taskId, onComplete, variant = "default" }: TimerProps) {
       </div>
 
       {/* Controls */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-center gap-3">
         <Button onClick={handleStart} size="lg" className="min-w-32">
           {running ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
           {running ? "Jeda" : remainingMs < totalMs ? "Lanjut" : "Mulai"}
         </Button>
-        <Button variant="secondary" size="lg" onClick={handleReset} aria-label="Reset">
+        {sessionId && (
+          <Button variant="secondary" size="lg" onClick={handleFinishNow} className="min-w-32">
+            <Flag className="h-5 w-5" /> Selesai
+          </Button>
+        )}
+        <Button variant="secondary" size="lg" onClick={handleReset} aria-label="Reset" title="Reset">
           <RotateCcw className="h-5 w-5" />
         </Button>
       </div>

@@ -4,6 +4,7 @@ import { persist } from "zustand/middleware";
 // Single module-level interval so only ONE countdown runs regardless of how
 // many <Timer> instances are mounted (page + focus overlay).
 let intervalId: ReturnType<typeof setInterval> | null = null;
+let oneMinuteFired = false; // guard so the 1-min warning fires only once per session
 
 interface TimerStore {
   minutes: number;
@@ -13,12 +14,18 @@ interface TimerStore {
   custom: string;
   sessionId: string | null;
   overlay: boolean;
+  pendingJournalPrompt: number | null; // minutes of a just-finished session, to show journal prompt anywhere
+  pendingBreakPrompt: boolean; // true to offer a break after a finished session
+  onOneMinute: (() => void) | null;
   onComplete: ((sessionId: string | null, minutes: number) => void) | null;
   setMinutes: (m: number) => void;
   setCustom: (c: string) => void;
   setRunning: (r: boolean) => void;
   setSessionId: (id: string | null) => void;
   setOverlay: (v: boolean) => void;
+  setPendingJournalPrompt: (v: number | null) => void;
+  setPendingBreakPrompt: (v: boolean) => void;
+  setOnOneMinute: (fn: (() => void) | null) => void;
   setOnComplete: (fn: ((sessionId: string | null, minutes: number) => void) | null) => void;
   // Restore an active session from the backend (refresh / cross-device).
   restore: (session: { id: string; duration: number; startedAt: number }) => void;
@@ -40,6 +47,9 @@ export const useTimerStore = create<TimerStore>()(
       custom: "",
       sessionId: null,
       overlay: false,
+      pendingJournalPrompt: null,
+      pendingBreakPrompt: false,
+      onOneMinute: null,
       onComplete: null,
       remainingMs: 25 * 60_000,
 
@@ -54,6 +64,9 @@ export const useTimerStore = create<TimerStore>()(
       setRunning: (r) => set({ running: r }),
       setSessionId: (id) => set({ sessionId: id }),
       setOverlay: (v) => set({ overlay: v }),
+      setPendingJournalPrompt: (v) => set({ pendingJournalPrompt: v }),
+      setPendingBreakPrompt: (v) => set({ pendingBreakPrompt: v }),
+      setOnOneMinute: (fn) => set({ onOneMinute: fn }),
       setOnComplete: (fn) => set({ onComplete: fn }),
 
       // Restore from an active backend session: recompute remaining from
@@ -73,7 +86,7 @@ export const useTimerStore = create<TimerStore>()(
       },
 
       tick: () => {
-        const { startedAt, durationMs, minutes, onComplete, sessionId } = get();
+        const { startedAt, durationMs, minutes, onComplete, onOneMinute, sessionId } = get();
         if (!startedAt) return;
         const remaining = (startedAt + durationMs) - Date.now();
         if (remaining <= 0) {
@@ -81,12 +94,18 @@ export const useTimerStore = create<TimerStore>()(
             clearInterval(intervalId);
             intervalId = null;
           }
+          oneMinuteFired = false;
           // Clear the session so the UI returns to a fresh/startable state and
           // the backend can be marked completed via onComplete.
           set({ remainingMs: 0, running: false, sessionId: null, startedAt: null });
           onComplete?.(sessionId, minutes);
         } else {
           set({ remainingMs: remaining });
+          // Fire a one-time warning when ~1 minute remains (#5).
+          if (remaining <= 61_000 && remaining > 0 && !oneMinuteFired) {
+            oneMinuteFired = true;
+            onOneMinute?.();
+          }
         }
       },
 

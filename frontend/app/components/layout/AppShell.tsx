@@ -23,6 +23,7 @@ import { CreateSheet } from "~/features/shared/CreateSheet";
 import { QuickCaptureGlobal } from "~/features/ideas/components/QuickCapture";
 import { SearchModal } from "~/features/search/SearchModal";
 import { SyncIndicator } from "./SyncIndicator";
+import { GlobalTimer } from "./GlobalTimer";
 import { checkDueTasks } from "~/lib/reminders";
 
 const nav: NavItemDef[] = [
@@ -191,6 +192,7 @@ export function AppShell() {
       <CreateSheet />
       <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
       <SyncIndicator />
+      <GlobalTimer />
 
       <QuickCaptureGlobal />
     </div>

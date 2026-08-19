@@ -1,16 +1,16 @@
 import { useState, useEffect } from "react";
-import { Maximize2, Timer as TimerIcon, Trash2 } from "lucide-react";
+import { Maximize2, Timer as TimerIcon, Trash2, Flame, Award } from "lucide-react";
 import { Badge } from "~/components/ui/Badge";
 import { Button } from "~/components/ui/Button";
 import { SkeletonCard } from "~/components/ui/Skeleton";
 import { formatDateTime } from "~/lib/date";
 import { toastSuccess, toastError } from "~/lib/toast";
 import { useTasks } from "~/features/tasks/hooks";
-import { useSessions, useSessionStats, useTodaySessions, fetchActiveSession, useEndSession, useDeleteSession, useDeleteAllSessions } from "./hooks";
+import { useSessions, useSessionStats, useTodaySessions, useDeleteSession, useDeleteAllSessions } from "./hooks";
+import { computeFocusStreak, computeDeepWorkScore, focusStreakLabel } from "./focusStats";
 import { useTimerStore } from "./timerStore";
 import { Timer } from "./components/Timer";
 import { FocusMode } from "./components/FocusMode";
-import { FocusJournalPrompt } from "./components/FocusJournalPrompt";
 
 function statCard(value: string, label: string) {
   return (
@@ -29,12 +29,13 @@ export default function TimerPage() {
 
   const [taskId, setTaskId] = useState<string>("");
   const [focusMode, setFocusMode] = useState(false);
-  const [journalPrompt, setJournalPrompt] = useState<{ minutes: number } | null>(null);
 
   const linkedTask = tasks.find((t) => t.id === taskId);
-  const endSession = useEndSession();
   const deleteSession = useDeleteSession();
   const deleteAllSessions = useDeleteAllSessions();
+
+  const streak = computeFocusStreak(sessions);
+  const score = computeDeepWorkScore(sessions);
 
   async function handleDeleteSession(id: string) {
     if (!confirm("Yakin hapus sesi ini dari riwayat?")) return;
@@ -57,49 +58,13 @@ export default function TimerPage() {
     }
   }
 
-  // Called by the timer store when the countdown reaches 0: mark the backend
-  // session completed, then notify + prompt. Runs async so the session is
-  // recorded before we show feedback (fixes "0:00 stuck / focus minutes not added").
-  const handleComplete = (sessionId: string | null, minutes: number) => {
-    if (sessionId) {
-      endSession.mutate({ id: sessionId, status: "completed" });
-    }
-    const text =
-      minutes >= 50
-        ? `Sesi ${minutes} menit selesai! Lakukan stretch & rehidrasi.`
-        : `Sesi ${minutes} menit selesai! Istirahat 5-10 menit. 💪`;
-    toastSuccess(text);
-    setJournalPrompt({ minutes });
-  };
-
-  // Register completion handler once on the shared store.
-  useEffect(() => {
-    useTimerStore.getState().setOnComplete(handleComplete);
-    return () => useTimerStore.getState().setOnComplete(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   // Keep overlay flag in sync so the timer renders dark while focused.
   useEffect(() => {
     useTimerStore.getState().setOverlay(focusMode);
   }, [focusMode]);
 
-  // Restore active session from backend on mount (refresh / cross-device).
-  useEffect(() => {
-    const store = useTimerStore.getState();
-    // Only restore if we don't already have an active session in store.
-    if (store.sessionId) return;
-    fetchActiveSession().then((session) => {
-      if (session) {
-        store.restore(session);
-      }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   // Single timer instance shared between the page and the focus overlay.
-  // Completion is handled via the store's onComplete (registered above), not
-  // via the Timer's prop.
+  // Completion is handled globally (GlobalTimer), not by this page.
   const timer = <Timer taskId={taskId || undefined} />;
 
   return (
@@ -124,18 +89,44 @@ export default function TimerPage() {
 
       {/* Today summary */}
       {todayLoading ? (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <SkeletonCard />
           <SkeletonCard />
           <SkeletonCard />
           <SkeletonCard />
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {statCard(String(today?.sessions.length ?? 0), "Sesi hari ini")}
           {statCard(`${today?.focusMinutes ?? 0}m`, "Fokus hari ini")}
           {statCard(`${stats?.weekMinutes ?? 0}m`, "Fokus minggu ini")}
+          {statCard(`${stats?.completedToday ?? 0}`, "Pomodoro selesai")}
         </div>
       )}
+
+      {/* Focus streak + deep work score (#10, #11) */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 text-orange-600 dark:bg-orange-900/40 dark:text-orange-400">
+            <Flame className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-900 dark:text-white">{focusStreakLabel(streak)}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Konsistensi fokus harian</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-400">
+            <Award className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-900 dark:text-white">
+              Deep Work Score: <span className="font-semibold text-violet-600 dark:text-violet-400">{score}/100</span>
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Volume & konsistensi 7 hari terakhir</p>
+          </div>
+        </div>
+      </div>
 
       {/* Task association */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
@@ -169,16 +160,6 @@ export default function TimerPage() {
         <FocusMode onExit={() => setFocusMode(false)} taskName={linkedTask?.title}>
           {timer}
         </FocusMode>
-      )}
-
-      {/* Auto-journal prompt after focus session */}
-      {journalPrompt && (
-        <FocusJournalPrompt
-          open
-          minutes={journalPrompt.minutes}
-          taskName={linkedTask?.title}
-          onClose={() => setJournalPrompt(null)}
-        />
       )}
 
       {/* Session history */}
