@@ -112,7 +112,6 @@ export function ensureSchema() {
       created_at INTEGER NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_tasks_user ON tasks(user_id);
-    CREATE UNIQUE INDEX IF NOT EXISTS idx_journals_user_date ON journals(user_id, date);
     CREATE INDEX IF NOT EXISTS idx_habits_user ON habits(user_id);
     CREATE UNIQUE INDEX IF NOT EXISTS idx_habit_logs_habit_date ON habit_logs(habit_id, date);
     CREATE TABLE IF NOT EXISTS weekly_reviews (
@@ -141,19 +140,8 @@ export function ensureSchema() {
       ALTER TABLE journals ADD COLUMN no_scroll INTEGER NOT NULL DEFAULT 0;
     `);
   }
-  // Rebuild unique index: old one is (user_id, date); new should be (user_id, date, slot).
-  // Drop the old constraint only if it's the old shape.
-  try {
-    const oldIdx = raw
-      .prepare("SELECT sql FROM sqlite_master WHERE type='index' AND name='idx_journals_user_date'")
-      .get() as { sql: string } | undefined;
-    if (oldIdx && oldIdx.sql && !oldIdx.sql.includes("slot")) {
-      raw.exec("DROP INDEX IF EXISTS idx_journals_user_date");
-      raw.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_journals_user_date_slot ON journals(user_id, date, slot)");
-    } else if (!oldIdx) {
-      raw.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_journals_user_date_slot ON journals(user_id, date, slot)");
-    }
-  } catch {
-    /* index already fine */
-  }
+  // Rebuild unique index: old one is (user_id, date); new is (user_id, date, slot).
+  // The old index MUST be dropped — it blocks having 2 journals per day.
+  raw.exec("DROP INDEX IF EXISTS idx_journals_user_date");
+  raw.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_journals_user_date_slot ON journals(user_id, date, slot)");
 }
