@@ -9,6 +9,7 @@ import { Input } from "~/components/ui/Input";
 import { cn } from "~/lib/cn";
 import { toastError, toastSuccess } from "~/lib/toast";
 import { requestNotificationPermission } from "~/lib/reminders";
+import { loadReminders, saveReminders, type JournalReminders } from "~/lib/journalReminders";
 import { downloadJson, useChangePassword, useDeleteAccount, useExportData } from "./hooks";
 
 const THEMES: { value: Theme; label: string }[] = [
@@ -28,11 +29,20 @@ export default function SettingsPage() {
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [reminders, setReminders] = useState<JournalReminders>(() =>
+    typeof window !== "undefined" ? loadReminders() : {},
+  );
   const [notifStatus, setNotifStatus] = useState<string>(
     typeof window !== "undefined" && "Notification" in window
       ? Notification.permission
       : "unsupported",
   );
+
+  function updateReminder(slot: "morning" | "evening", value: string) {
+    const next = { ...reminders, [slot]: value || undefined };
+    setReminders(next);
+    saveReminders(next);
+  }
 
   async function handleEnableNotifications() {
     const granted = await requestNotificationPermission();
@@ -120,26 +130,61 @@ export default function SettingsPage() {
       </Card>
 
       <Card title="Notifikasi">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium text-gray-900 dark:text-white">Reminder task due</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Dapatkan notifikasi saat ada task yang jatuh tempo hari ini.
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">Reminder task due</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Dapatkan notifikasi saat ada task yang jatuh tempo hari ini.
+              </p>
+            </div>
+            {notifStatus === "granted" ? (
+              <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-900/40 dark:text-green-300">
+                Aktif
+              </span>
+            ) : notifStatus === "denied" ? (
+              <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                Diblokir
+              </span>
+            ) : (
+              <Button variant="secondary" onClick={handleEnableNotifications}>
+                <Bell className="h-4 w-4" /> Aktifkan
+              </Button>
+            )}
+          </div>
+
+          {/* Journal reminders */}
+          <div className="border-t border-gray-100 pt-4 dark:border-gray-800">
+            <p className="text-sm font-medium text-gray-900 dark:text-white">Reminder Journal</p>
+            <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
+              Notifikasi pengingat menulis journal pagi & malam (perlu izin notifikasi aktif).
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="mb-1 block text-xs text-gray-500 dark:text-gray-400">🌅 Pagi</span>
+                <input
+                  type="time"
+                  value={reminders.morning ?? ""}
+                  onChange={(e) => updateReminder("morning", e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs text-gray-500 dark:text-gray-400">🌙 Malam</span>
+                <input
+                  type="time"
+                  value={reminders.evening ?? ""}
+                  onChange={(e) => updateReminder("evening", e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                />
+              </label>
+            </div>
+            <p className="mt-2 text-xs text-gray-400">
+              {reminders.morning || reminders.evening
+                ? "Reminder aktif. Browser harus terbuka agar notifikasi muncul."
+                : "Atur jam untuk mengaktifkan pengingat journal."}
             </p>
           </div>
-          {notifStatus === "granted" ? (
-            <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-900/40 dark:text-green-300">
-              Aktif
-            </span>
-          ) : notifStatus === "denied" ? (
-            <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-900/40 dark:text-red-300">
-              Diblokir
-            </span>
-          ) : (
-            <Button variant="secondary" onClick={handleEnableNotifications}>
-              <Bell className="h-4 w-4" /> Aktifkan
-            </Button>
-          )}
         </div>
       </Card>
 

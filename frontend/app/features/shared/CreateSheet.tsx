@@ -58,6 +58,10 @@ export function CreateSheet() {
             <X className="h-5 w-5" />
           </button>
         </div>
+        {/* Nudge: capture instead of scroll */}
+        <p className="mx-5 mt-1 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+          🧠 Lagi pengen scroll? Tulis 1 ide dulu — 30 detik, jauh lebih berharga.
+        </p>
         <div className="p-3">
           {options.map((opt) => (
             <button

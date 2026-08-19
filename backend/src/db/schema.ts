@@ -32,6 +32,7 @@ export const journals = sqliteTable("journals", {
   mood: text("mood"), // great | good | okay | low | bad
   energy: integer("energy"), // 1-5
   prompts: text("prompts"), // JSON { gratitude, intention, affirmation } for morning; { win, wentWell, toImprove, lesson } for evening
+  noScroll: integer("no_scroll").notNull().default(0), // 1 = day free of doomscrolling (self-reported, evening)
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });

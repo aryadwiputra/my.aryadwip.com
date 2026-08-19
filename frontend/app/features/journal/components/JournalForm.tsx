@@ -22,6 +22,8 @@ export function JournalForm({ journal, slot, onSlotChange, onSaved }: JournalFor
 
   const [mood, setMood] = useState<Mood | null>(journal?.mood as Mood | null ?? null);
   const [energy, setEnergy] = useState<number | null>(journal?.energy ?? null);
+  const [noScroll, setNoScroll] = useState<boolean>(journal?.noScroll ?? false);
+  const [quickMode, setQuickMode] = useState(false);
   const [prompts, setPrompts] = useState<Record<string, string>>(
     () =>
       Object.fromEntries(
@@ -38,6 +40,7 @@ export function JournalForm({ journal, slot, onSlotChange, onSaved }: JournalFor
     slot,
     mood: mood ?? undefined,
     energy: energy ?? undefined,
+    noScroll,
     prompts,
   };
 
@@ -146,23 +149,76 @@ export function JournalForm({ journal, slot, onSlotChange, onSaved }: JournalFor
           </div>
         </div>
 
-        {/* Prompts */}
-        <div className="space-y-4">
-          {promptList.map((p) => (
-            <div key={p.key}>
-              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                {p.label}
-              </label>
-              <textarea
-                rows={3}
-                placeholder={p.placeholder}
-                value={prompts[p.key] ?? ""}
-                onChange={(e) => setPrompt(p.key, e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-              />
-            </div>
-          ))}
+        {/* Quick mode toggle */}
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => setQuickMode((v) => !v)}
+            className={cn(
+              "rounded-full px-3 py-1 text-xs font-medium transition",
+              quickMode
+                ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+                : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700",
+            )}
+          >
+            ⚡ Mode 30 Detik {quickMode ? "ON" : "OFF"}
+          </button>
         </div>
+
+        {/* Prompts — quick mode shows a single free-text area */}
+        {quickMode ? (
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {isMorning ? "Apa 1 hal yang penting hari ini?" : "Bagaimana harimu dalam 1 kalimat?"}
+            </label>
+            <textarea
+              rows={3}
+              placeholder={isMorning ? "Niat singkat untuk hari ini..." : "Refleksi singkat hari ini..."}
+              value={prompts[isMorning ? "intention" : "wentWell"] ?? ""}
+              onChange={(e) => setPrompt(isMorning ? "intention" : "wentWell", e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            />
+            <p className="mt-1 text-xs text-gray-400">Selesai dalam 30 detik — yang penting tercatat.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {promptList.map((p) => (
+              <div key={p.key}>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {p.label}
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder={p.placeholder}
+                  value={prompts[p.key] ?? ""}
+                  onChange={(e) => setPrompt(p.key, e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* No-scroll toggle (evening only) */}
+        {!isMorning && (
+          <button
+            type="button"
+            onClick={() => setNoScroll((v) => !v)}
+            className={cn(
+              "flex w-full items-center justify-between rounded-lg border px-4 py-3 text-sm font-medium transition",
+              noScroll
+                ? "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300"
+                : "border-gray-200 text-gray-600 hover:border-gray-300 dark:border-gray-700 dark:text-gray-300",
+            )}
+          >
+            <span className="flex items-center gap-2">
+              🚫 Hari ini bebas doomscroll?
+            </span>
+            <span className={cn("flex h-5 w-9 items-center rounded-full p-0.5 transition", noScroll ? "bg-emerald-500" : "bg-gray-300 dark:bg-gray-600")}>
+              <span className={cn("h-4 w-4 rounded-full bg-white shadow transition", noScroll && "translate-x-4")} />
+            </span>
+          </button>
+        )}
 
         <div className="flex gap-3">
           <Button type="submit" loading={saving} className="flex-1">

@@ -12,6 +12,7 @@ import habits from "./routes/habits";
 import dashboard from "./routes/dashboard";
 import settings from "./routes/settings";
 import search from "./routes/search";
+import gamification from "./routes/gamification";
 import type { AppEnv } from "./types";
 
 export function createApp() {
@@ -31,6 +32,7 @@ export function createApp() {
   app.route("/api/dashboard", dashboard);
   app.route("/api/settings", settings);
   app.route("/api/search", search);
+  app.route("/api/gamification", gamification);
 
   app.notFound((c) => c.json({ error: "NotFound", message: "Route tidak ditemukan" }, 404));
 

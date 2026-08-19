@@ -34,6 +34,7 @@ export interface Journal {
   mood?: string | null;
   energy?: number | null;
   prompts: JournalPrompts;
+  noScroll?: boolean;
   createdAt: number;
   updatedAt: number;
 }
@@ -47,6 +48,7 @@ export interface JournalPayload {
   slot?: JournalSlot;
   mood?: Mood;
   energy?: number;
+  noScroll?: boolean;
   prompts: JournalPrompts;
 }
 
@@ -186,4 +188,23 @@ export interface HabitPayload {
   name: string;
   icon?: string;
   color?: string;
+}
+
+export interface Badge {
+  id: string;
+  name: string;
+  icon: string;
+  earned: boolean;
+}
+
+export interface GamificationData {
+  level: number;
+  title: string;
+  xp: number;
+  nextLevelXp: number | null;
+  progress: number;
+  xpBreakdown: { journal: number; task: number; focus: number; habit: number };
+  noScrollStreak: number;
+  badges: Badge[];
+  insight: { withFocus: number; withoutFocus: number; message: string } | null;
 }

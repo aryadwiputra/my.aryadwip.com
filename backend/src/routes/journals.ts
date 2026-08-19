@@ -31,6 +31,7 @@ const createSchema = z.object({
   mood: moodSchema.optional(),
   energy: z.number().int().min(1).max(5).optional(),
   prompts: promptsSchema.optional(),
+  noScroll: z.union([z.boolean(), z.number()]).optional(),
 });
 
 const updateSchema = z.object({
@@ -38,6 +39,7 @@ const updateSchema = z.object({
   mood: moodSchema.optional(),
   energy: z.number().int().min(1).max(5).optional(),
   prompts: promptsSchema.optional(),
+  noScroll: z.union([z.boolean(), z.number()]).optional(),
 });
 
 type JournalRow = (typeof journalsTable)["$inferSelect"];
@@ -60,6 +62,7 @@ function serialize(j: JournalRow) {
     mood: j.mood,
     energy: j.energy,
     prompts: parsePrompts(j.prompts),
+    noScroll: Boolean(j.noScroll),
     createdAt: j.createdAt,
     updatedAt: j.updatedAt,
   };
@@ -131,7 +134,7 @@ journalRoutes.post(
   zValidator("json", createSchema),
   (c) => {
     const userId = c.get("userId");
-    const { date, slot = "morning", mood, energy, prompts } = c.req.valid("json");
+    const { date, slot = "morning", mood, energy, prompts, noScroll } = c.req.valid("json");
 
     const existing = db
       .select()
@@ -162,6 +165,7 @@ journalRoutes.post(
         mood: mood ?? null,
         energy: energy ?? null,
         prompts: prompts ? JSON.stringify(prompts) : null,
+        noScroll: noScroll ? 1 : 0,
         createdAt: now,
         updatedAt: now,
       })
@@ -205,6 +209,7 @@ journalRoutes.put(
         mood: body.mood !== undefined ? body.mood : existing.mood,
         energy: body.energy !== undefined ? body.energy : existing.energy,
         prompts: body.prompts ? JSON.stringify(body.prompts) : existing.prompts,
+        noScroll: body.noScroll !== undefined ? (body.noScroll ? 1 : 0) : existing.noScroll,
         updatedAt: Date.now(),
       })
       .where(and(eq(journalsTable.id, id), eq(journalsTable.userId, userId)))

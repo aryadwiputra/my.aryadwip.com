@@ -10,6 +10,8 @@ import { WeeklyReview } from "./components/WeeklyReview";
 import { AnalyticsChart } from "./components/AnalyticsChart";
 import { StatsSummary } from "./components/StatsSummary";
 import { useDashboard, useRefreshDashboard } from "./hooks";
+import { useGamification } from "./gamificationHooks";
+import { GamificationCard } from "./components/GamificationCard";
 
 function greeting(): string {
   const h = new Date().getHours();
@@ -24,6 +26,7 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const refresh = useRefreshDashboard();
   const { data, isLoading, isRefetching } = useDashboard();
+  const { data: gamification } = useGamification();
 
   if (isLoading) {
     return (
@@ -71,6 +74,7 @@ export default function DashboardPage() {
         </div>
         <div className="space-y-6">
           <QuickMini onNavigate={navigate} />
+          {gamification && <GamificationCard data={gamification} />}
           <StatsSummary stats={data!.stats} />
         </div>
       </div>

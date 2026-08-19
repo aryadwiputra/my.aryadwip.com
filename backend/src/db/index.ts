@@ -51,6 +51,7 @@ export function ensureSchema() {
       mood TEXT,
       energy INTEGER,
       prompts TEXT,
+      no_scroll INTEGER NOT NULL DEFAULT 0,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     );
@@ -133,6 +134,11 @@ export function ensureSchema() {
   if (!journalCols.some((c) => c.name === "slot")) {
     raw.exec(`
       ALTER TABLE journals ADD COLUMN slot TEXT NOT NULL DEFAULT 'morning';
+    `);
+  }
+  if (!journalCols.some((c) => c.name === "no_scroll")) {
+    raw.exec(`
+      ALTER TABLE journals ADD COLUMN no_scroll INTEGER NOT NULL DEFAULT 0;
     `);
   }
   // Rebuild unique index: old one is (user_id, date); new should be (user_id, date, slot).

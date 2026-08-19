@@ -25,6 +25,7 @@ import { SearchModal } from "~/features/search/SearchModal";
 import { SyncIndicator } from "./SyncIndicator";
 import { GlobalTimer } from "./GlobalTimer";
 import { checkDueTasks } from "~/lib/reminders";
+import { checkJournalReminders } from "~/lib/journalReminders";
 
 const nav: NavItemDef[] = [
   { to: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
@@ -133,6 +134,14 @@ export function AppShell() {
     if (hydrated && user) {
       checkDueTasks();
     }
+  }, [hydrated, user]);
+
+  // Journal reminder scheduler — check every minute while logged in.
+  useEffect(() => {
+    if (!hydrated || !user) return;
+    checkJournalReminders();
+    const id = setInterval(checkJournalReminders, 60_000);
+    return () => clearInterval(id);
   }, [hydrated, user]);
 
   // IMPORTANT: Only redirect after hydration. On SSR/first paint the store is
