@@ -93,6 +93,11 @@ export const useTimerStore = create<TimerStore>()(
           running: remaining > 0, // auto-lanjut if time remains
           custom: "",
         });
+        // If resuming with time left, ensure the interval is actually running
+        // (start() bails early when running is already true).
+        if (remaining > 0 && !intervalId) {
+          intervalId = setInterval(() => useTimerStore.getState().tick(), 500);
+        }
       },
 
       tick: () => {

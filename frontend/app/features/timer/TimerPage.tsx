@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { Maximize2, Timer as TimerIcon, Trash2, Flame, Award } from "lucide-react";
+import { Maximize2, Timer as TimerIcon, Trash2, Flame, Award, Play } from "lucide-react";
 import { Badge } from "~/components/ui/Badge";
 import { Button } from "~/components/ui/Button";
 import { SkeletonCard } from "~/components/ui/Skeleton";
 import { formatDateTime } from "~/lib/date";
 import { toastSuccess, toastError } from "~/lib/toast";
 import { useTasks } from "~/features/tasks/hooks";
-import { useSessions, useSessionStats, useTodaySessions, useDeleteSession, useDeleteAllSessions } from "./hooks";
+import { useSessions, useSessionStats, useTodaySessions, useDeleteSession, useDeleteAllSessions, resumeSessionById } from "./hooks";
 import { computeFocusStreak, computeDeepWorkScore, focusStreakLabel } from "./focusStats";
 import { useTimerStore } from "./timerStore";
 import { Timer } from "./components/Timer";
@@ -56,6 +56,18 @@ export default function TimerPage() {
     } catch (err) {
       toastError(err instanceof Error ? err.message : "Gagal menghapus riwayat");
     }
+  }
+
+  // Resume an "active" session directly from its history row (A).
+  async function handleResume(id: string) {
+    const s = await resumeSessionById(id);
+    if (!s) {
+      toastError("Sesi sudah berakhir / tidak bisa dilanjutkan");
+      return;
+    }
+    const store = useTimerStore.getState();
+    store.restore(s); // restore() already starts the interval if time remains
+    toastSuccess("Sesi dilanjutkan");
   }
 
   // Keep overlay flag in sync so the timer renders dark while focused.
@@ -197,6 +209,16 @@ export default function TimerPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-400">{formatDateTime(s.startedAt)}</span>
+                  {s.status === "active" && (
+                    <button
+                      onClick={() => handleResume(s.id)}
+                      aria-label="Lanjutkan sesi"
+                      title="Lanjutkan sesi"
+                      className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                    >
+                      <Play className="h-3.5 w-3.5" /> Lanjutkan
+                    </button>
+                  )}
                   <button
                     onClick={() => handleDeleteSession(s.id)}
                     aria-label="Hapus sesi"

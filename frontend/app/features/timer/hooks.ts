@@ -80,15 +80,50 @@ export function useDeleteAllSessions() {
 }
 
 /**
- * Find an active session from the backend and restore it into the timer store.
- * Used on mount so refresh / cross-device resumes the countdown.
- * Returns the active session if found, else null.
+ * Auto-complete any active session whose planned duration has already elapsed.
+ * Returns the first still-valid (in-progress) active session, or null.
  */
 export async function fetchActiveSession(): Promise<FocusSession | null> {
   try {
     const res = await api<TodaySummary>("/api/sessions/today");
-    const active = res.sessions.find((s) => s.status === "active");
-    return active ?? null;
+    const now = Date.now();
+    let restored: FocusSession | null = null;
+
+    for (const s of res.sessions) {
+      if (s.status !== "active") continue;
+      const endsAt = s.startedAt + s.duration * 60_000;
+      if (endsAt <= now) {
+        // Expired while away — mark completed so it doesn't linger as "active".
+        try {
+          await api(`/api/sessions/${s.id}`, { method: "PATCH", body: { status: "completed" } });
+        } catch {
+          /* ignore */
+        }
+      } else if (!restored) {
+        restored = s;
+      }
+    }
+    return restored;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Restore a specific active session by id (used by the "Lanjutkan" button in history).
+ * Returns the session if still valid, else null (after completing it if expired).
+ */
+export async function resumeSessionById(id: string): Promise<FocusSession | null> {
+  try {
+    const res = await api<{ sessions: FocusSession[] }>("/api/sessions");
+    const s = res.sessions.find((x) => x.id === id && x.status === "active");
+    if (!s) return null;
+    const endsAt = s.startedAt + s.duration * 60_000;
+    if (endsAt <= Date.now()) {
+      await api(`/api/sessions/${id}`, { method: "PATCH", body: { status: "completed" } });
+      return null;
+    }
+    return s;
   } catch {
     return null;
   }
