@@ -144,4 +144,25 @@ sessionRoutes.patch("/:id", zValidator("json", updateSchema), (c) => {
   return c.json({ session: serialize(row) }, 200);
 });
 
+// DELETE /api/sessions/:id  (delete a single session)
+sessionRoutes.delete("/:id", (c) => {
+  const userId = c.get("userId");
+  const id = c.req.param("id");
+  const existing = db
+    .select()
+    .from(sessionsTable)
+    .where(and(eq(sessionsTable.id, id), eq(sessionsTable.userId, userId)))
+    .get();
+  if (!existing) return c.json({ error: "NotFound", message: "Sesi tidak ditemukan" }, 404);
+  db.delete(sessionsTable).where(and(eq(sessionsTable.id, id), eq(sessionsTable.userId, userId))).run();
+  return c.json({ success: true }, 200);
+});
+
+// DELETE /api/sessions  (delete all sessions for the user)
+sessionRoutes.delete("/", (c) => {
+  const userId = c.get("userId");
+  db.delete(sessionsTable).where(eq(sessionsTable.userId, userId)).run();
+  return c.json({ success: true, deleted: true }, 200);
+});
+
 export default sessionRoutes;

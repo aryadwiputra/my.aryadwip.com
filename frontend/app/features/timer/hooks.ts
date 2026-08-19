@@ -58,6 +58,27 @@ export function useEndSession() {
   });
 }
 
+export function useDeleteSession() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      api<{ success: boolean }>(`/api/sessions/${id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: sessionKeys.all });
+    },
+  });
+}
+
+export function useDeleteAllSessions() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api<{ success: boolean }>(`/api/sessions`, { method: "DELETE" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: sessionKeys.all });
+    },
+  });
+}
+
 /**
  * Find an active session from the backend and restore it into the timer store.
  * Used on mount so refresh / cross-device resumes the countdown.

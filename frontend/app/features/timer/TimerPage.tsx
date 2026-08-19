@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { Maximize2, Timer as TimerIcon } from "lucide-react";
+import { Maximize2, Timer as TimerIcon, Trash2 } from "lucide-react";
 import { Badge } from "~/components/ui/Badge";
 import { Button } from "~/components/ui/Button";
 import { SkeletonCard } from "~/components/ui/Skeleton";
 import { formatDateTime } from "~/lib/date";
-import { toastSuccess } from "~/lib/toast";
+import { toastSuccess, toastError } from "~/lib/toast";
 import { useTasks } from "~/features/tasks/hooks";
-import { useSessions, useSessionStats, useTodaySessions, fetchActiveSession, useEndSession } from "./hooks";
+import { useSessions, useSessionStats, useTodaySessions, fetchActiveSession, useEndSession, useDeleteSession, useDeleteAllSessions } from "./hooks";
 import { useTimerStore } from "./timerStore";
 import { Timer } from "./components/Timer";
 import { FocusMode } from "./components/FocusMode";
@@ -33,6 +33,29 @@ export default function TimerPage() {
 
   const linkedTask = tasks.find((t) => t.id === taskId);
   const endSession = useEndSession();
+  const deleteSession = useDeleteSession();
+  const deleteAllSessions = useDeleteAllSessions();
+
+  async function handleDeleteSession(id: string) {
+    if (!confirm("Yakin hapus sesi ini dari riwayat?")) return;
+    try {
+      await deleteSession.mutateAsync(id);
+      toastSuccess("Sesi dihapus");
+    } catch (err) {
+      toastError(err instanceof Error ? err.message : "Gagal menghapus sesi");
+    }
+  }
+
+  async function handleDeleteAll() {
+    if (!confirm("Yakin hapus SEMUA riwayat sesi?")) return;
+    if (!confirm("Konfirmasi terakhir: seluruh riwayat fokus akan dihapus permanen.")) return;
+    try {
+      await deleteAllSessions.mutateAsync();
+      toastSuccess("Semua riwayat sesi dihapus");
+    } catch (err) {
+      toastError(err instanceof Error ? err.message : "Gagal menghapus riwayat");
+    }
+  }
 
   // Called by the timer store when the countdown reaches 0: mark the backend
   // session completed, then notify + prompt. Runs async so the session is
@@ -160,7 +183,17 @@ export default function TimerPage() {
 
       {/* Session history */}
       <section>
-        <h2 className="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Riwayat Sesi</h2>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Riwayat Sesi</h2>
+          {sessions.length > 0 && (
+            <button
+              onClick={handleDeleteAll}
+              className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Hapus Semua
+            </button>
+          )}
+        </div>
         {sessionsLoading ? (
           <SkeletonCard />
         ) : sessions.length === 0 ? (
@@ -181,7 +214,17 @@ export default function TimerPage() {
                     {s.duration} min
                   </span>
                 </div>
-                <span className="text-xs text-gray-400">{formatDateTime(s.startedAt)}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400">{formatDateTime(s.startedAt)}</span>
+                  <button
+                    onClick={() => handleDeleteSession(s.id)}
+                    aria-label="Hapus sesi"
+                    title="Hapus sesi"
+                    className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
