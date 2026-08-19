@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Maximize2, Timer as TimerIcon } from "lucide-react";
 import { Badge } from "~/components/ui/Badge";
 import { Button } from "~/components/ui/Button";
@@ -7,6 +7,7 @@ import { formatDateTime } from "~/lib/date";
 import { toastSuccess } from "~/lib/toast";
 import { useTasks } from "~/features/tasks/hooks";
 import { useSessions, useSessionStats, useTodaySessions } from "./hooks";
+import { useTimerStore } from "./timerStore";
 import { Timer } from "./components/Timer";
 import { FocusMode } from "./components/FocusMode";
 import { FocusJournalPrompt } from "./components/FocusJournalPrompt";
@@ -42,6 +43,22 @@ export default function TimerPage() {
     setJournalPrompt({ minutes });
   }
 
+  // Register completion handler once on the shared store.
+  useEffect(() => {
+    useTimerStore.getState().setOnComplete(() => () => {
+      const m = useTimerStore.getState().minutes;
+      handleComplete(m);
+    });
+    return () => useTimerStore.getState().setOnComplete(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Keep overlay flag in sync so the timer renders dark while focused.
+  useEffect(() => {
+    useTimerStore.getState().setOverlay(focusMode);
+  }, [focusMode]);
+
+  // Single timer instance shared between the page and the focus overlay.
   const timer = <Timer taskId={taskId || undefined} onComplete={handleComplete} />;
 
   return (
@@ -106,10 +123,10 @@ export default function TimerPage() {
         {timer}
       </div>
 
-      {/* FocusMode overlay */}
+      {/* FocusMode overlay — wraps the SAME timer instance (shared store state) */}
       {focusMode && (
         <FocusMode onExit={() => setFocusMode(false)} taskName={linkedTask?.title}>
-          <Timer taskId={taskId || undefined} onComplete={handleComplete} variant="dark" />
+          {timer}
         </FocusMode>
       )}
 

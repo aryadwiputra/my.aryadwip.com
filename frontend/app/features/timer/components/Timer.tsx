@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import { Pause, Play, RotateCcw } from "lucide-react";
 import { Button } from "~/components/ui/Button";
 import { cn } from "~/lib/cn";
 import { toastError } from "~/lib/toast";
+import { useTimerStore } from "../timerStore";
 import { useEndSession, useStartSession } from "../hooks";
 
 const PRESETS = [25, 50, 90];
@@ -39,97 +40,64 @@ interface TimerProps {
 }
 
 export function Timer({ taskId, onComplete, variant = "default" }: TimerProps) {
-  const onDark = variant === "dark";
+  const overlay = useTimerStore((s) => s.overlay);
+  const onDark = variant === "dark" || overlay;
   const startMutation = useStartSession();
   const endMutation = useEndSession();
 
-  const [minutes, setMinutes] = useState(25);
-  const [remainingMs, setRemainingMs] = useState(25 * 60_000);
-  const [running, setRunning] = useState(false);
-  const [custom, setCustom] = useState("");
-  const sessionIdRef = useRef<string | null>(null);
-  const doneRef = useRef(false);
+  const minutes = useTimerStore((s) => s.minutes);
+  const remainingMs = useTimerStore((s) => s.remainingMs);
+  const running = useTimerStore((s) => s.running);
+  const custom = useTimerStore((s) => s.custom);
+  const sessionId = useTimerStore((s) => s.sessionId);
+  const setMinutes = useTimerStore((s) => s.setMinutes);
+  const setCustom = useTimerStore((s) => s.setCustom);
+  const setSessionId = useTimerStore((s) => s.setSessionId);
+  const start = useTimerStore((s) => s.start);
+  const pause = useTimerStore((s) => s.pause);
+  const reset = useTimerStore((s) => s.reset);
 
   const totalMs = minutes * 60_000;
   const progress = totalMs > 0 ? 1 - remainingMs / totalMs : 0;
 
-  // countdown
-  useEffect(() => {
-    if (!running) return;
-    const id = setInterval(() => {
-      setRemainingMs((prev) => {
-        if (prev <= 1000) {
-          clearInterval(id);
-          setRunning(false);
-          completeSession();
-          return 0;
-        }
-        return prev - 1000;
-      });
-    }, 1000);
-    return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [running]);
-
-  async function completeSession() {
-    const sid = sessionIdRef.current;
-    if (!sid || doneRef.current) return;
-    doneRef.current = true;
-    try {
-      await endMutation.mutateAsync({ id: sid, status: "completed" });
-      beep();
-      onComplete?.(minutes);
-    } catch (err) {
-      toastError(err instanceof Error ? err.message : "Gagal menyelesaikan sesi");
-    }
-    sessionIdRef.current = null;
-  }
-
   async function handleStart() {
     if (running) {
-      setRunning(false);
+      pause();
       return;
     }
     // resume
-    if (remainingMs < totalMs && sessionIdRef.current) {
-      setRunning(true);
+    if (remainingMs < totalMs && sessionId) {
+      start();
       return;
     }
-    doneRef.current = false;
-    setRunning(true);
+    start();
     try {
       const session = await startMutation.mutateAsync({ duration: minutes, taskId });
-      sessionIdRef.current = session.id;
+      setSessionId(session.id);
     } catch (err) {
-      setRunning(false);
+      pause();
       toastError(err instanceof Error ? err.message : "Gagal memulai sesi");
     }
   }
 
   async function handleReset() {
-    setRunning(false);
-    setRemainingMs(totalMs);
-    if (sessionIdRef.current) {
+    reset();
+    if (sessionId) {
       try {
-        await endMutation.mutateAsync({ id: sessionIdRef.current, status: "cancelled" });
+        await endMutation.mutateAsync({ id: sessionId, status: "cancelled" });
       } catch {
         /* ignore */
       }
-      sessionIdRef.current = null;
+      setSessionId(null);
     }
-    doneRef.current = false;
   }
 
   function selectMinutes(m: number) {
-    setMinutes(m);
-    setRemainingMs(m * 60_000);
-    setRunning(false);
-    setCustom("");
-    if (sessionIdRef.current) {
-      endMutation.mutate({ id: sessionIdRef.current, status: "cancelled" });
-      sessionIdRef.current = null;
+    if (sessionId) {
+      endMutation.mutate({ id: sessionId, status: "cancelled" });
+      setSessionId(null);
     }
-    doneRef.current = false;
+    setMinutes(m);
   }
 
   function applyCustom() {
