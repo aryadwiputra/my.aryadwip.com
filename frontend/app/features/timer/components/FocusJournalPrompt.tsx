@@ -20,15 +20,12 @@ export function FocusJournalPrompt({ open, minutes, taskName, onClose }: FocusJo
   async function handleSave() {
     setSaving(true);
     try {
-      const gratitude = taskName
-        ? `Selesai sesi fokus ${minutes} menit untuk: ${taskName}`
-        : `Selesai sesi fokus ${minutes} menit`;
-      const intention = note.trim() || undefined;
       await createJournal.mutateAsync({
         date: todayStr(),
+        slot: "evening",
         mood: "good",
         energy: 4,
-        prompts: { gratitude, intention },
+        prompts: { wentWell: note.trim() || undefined, win: `Selesai sesi fokus ${minutes} menit` },
       });
       toastSuccess("Journal tersimpan ✨");
       setNote("");

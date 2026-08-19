@@ -14,15 +14,24 @@ export interface AuthResponse {
 export type Mood = "great" | "good" | "okay" | "low" | "bad";
 
 export interface JournalPrompts {
+  // morning
   gratitude?: string;
   intention?: string;
   affirmation?: string;
+  // evening
+  win?: string;
+  wentWell?: string;
+  toImprove?: string;
+  lesson?: string;
 }
+
+export type JournalSlot = "morning" | "evening";
 
 export interface Journal {
   id: string;
-  date: string; // YYYY-MM-DD
-  mood?: Mood | null;
+  date: string;
+  slot: JournalSlot;
+  mood?: string | null;
   energy?: number | null;
   prompts: JournalPrompts;
   createdAt: number;
@@ -35,9 +44,10 @@ export interface JournalStreaks {
 }
 
 export interface JournalPayload {
+  slot?: JournalSlot;
   mood?: Mood;
   energy?: number;
-  prompts?: JournalPrompts;
+  prompts: JournalPrompts;
 }
 
 export type TaskPriority = "P1" | "P2" | "P3" | "P4";

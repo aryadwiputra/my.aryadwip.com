@@ -47,6 +47,7 @@ export function ensureSchema() {
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       date TEXT NOT NULL,
+      slot TEXT NOT NULL DEFAULT 'morning',
       mood TEXT,
       energy INTEGER,
       prompts TEXT,
@@ -125,4 +126,28 @@ export function ensureSchema() {
     );
     CREATE UNIQUE INDEX IF NOT EXISTS idx_weekly_reviews_user_week ON weekly_reviews(user_id, week_start);
   `);
+
+  // --- Migrations for pre-existing databases ---
+  // journals.slot (morning | evening)
+  const journalCols = raw.prepare("PRAGMA table_info(journals)").all() as { name: string }[];
+  if (!journalCols.some((c) => c.name === "slot")) {
+    raw.exec(`
+      ALTER TABLE journals ADD COLUMN slot TEXT NOT NULL DEFAULT 'morning';
+    `);
+  }
+  // Rebuild unique index: old one is (user_id, date); new should be (user_id, date, slot).
+  // Drop the old constraint only if it's the old shape.
+  try {
+    const oldIdx = raw
+      .prepare("SELECT sql FROM sqlite_master WHERE type='index' AND name='idx_journals_user_date'")
+      .get() as { sql: string } | undefined;
+    if (oldIdx && oldIdx.sql && !oldIdx.sql.includes("slot")) {
+      raw.exec("DROP INDEX IF EXISTS idx_journals_user_date");
+      raw.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_journals_user_date_slot ON journals(user_id, date, slot)");
+    } else if (!oldIdx) {
+      raw.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_journals_user_date_slot ON journals(user_id, date, slot)");
+    }
+  } catch {
+    /* index already fine */
+  }
 }

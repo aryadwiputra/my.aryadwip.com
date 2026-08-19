@@ -4,34 +4,46 @@ import { Card } from "~/components/ui/Card";
 import { cn } from "~/lib/cn";
 import { todayStr } from "~/lib/date";
 import { toastError, toastSuccess } from "~/lib/toast";
-import type { Journal, JournalPayload, Mood } from "~/lib/types";
-import { ENERGY_LEVELS, MOOD_OPTIONS, PROMPT_FIELDS } from "../const";
+import type { Journal, JournalPayload, JournalSlot, Mood } from "~/lib/types";
+import { ENERGY_LEVELS, MOOD_OPTIONS, MORNING_PROMPTS, EVENING_PROMPTS } from "../const";
 import { useCreateJournal, useDeleteJournal, useUpdateJournal } from "../hooks";
 
 interface JournalFormProps {
   journal?: Journal | null;
+  slot: JournalSlot;
+  onSlotChange: (slot: JournalSlot) => void;
   onSaved?: () => void;
 }
 
-export function JournalForm({ journal, onSaved }: JournalFormProps) {
+export function JournalForm({ journal, slot, onSlotChange, onSaved }: JournalFormProps) {
   const createMutation = useCreateJournal();
   const updateMutation = useUpdateJournal();
   const deleteMutation = useDeleteJournal();
 
-  const [mood, setMood] = useState<Mood | null>(journal?.mood ?? null);
+  const [mood, setMood] = useState<Mood | null>(journal?.mood as Mood | null ?? null);
   const [energy, setEnergy] = useState<number | null>(journal?.energy ?? null);
-  const [gratitude, setGratitude] = useState(journal?.prompts.gratitude ?? "");
-  const [intention, setIntention] = useState(journal?.prompts.intention ?? "");
-  const [affirmation, setAffirmation] = useState(journal?.prompts.affirmation ?? "");
+  const [prompts, setPrompts] = useState<Record<string, string>>(
+    () =>
+      Object.fromEntries(
+        [...MORNING_PROMPTS, ...EVENING_PROMPTS].map((p) => [p.key, journal?.prompts?.[p.key] ?? ""]),
+      ),
+  );
 
   const isEditing = Boolean(journal);
   const saving = createMutation.isPending || updateMutation.isPending;
+  const isMorning = slot === "morning";
+  const promptList = isMorning ? MORNING_PROMPTS : EVENING_PROMPTS;
 
   const payload: JournalPayload = {
+    slot,
     mood: mood ?? undefined,
     energy: energy ?? undefined,
-    prompts: { gratitude, intention, affirmation },
+    prompts,
   };
+
+  function setPrompt(key: string, value: string) {
+    setPrompts((p) => ({ ...p, [key]: value }));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,7 +53,7 @@ export function JournalForm({ journal, onSaved }: JournalFormProps) {
         toastSuccess("Journal diperbarui");
       } else {
         await createMutation.mutateAsync({ date: todayStr(), ...payload });
-        toastSuccess("Journal hari ini tersimpan");
+        toastSuccess(isMorning ? "Journal pagi tersimpan" : "Journal malam tersimpan");
       }
       onSaved?.();
     } catch (err) {
@@ -51,13 +63,45 @@ export function JournalForm({ journal, onSaved }: JournalFormProps) {
 
   return (
     <Card
-      title={isEditing ? "Edit Journal" : "Journal Hari Ini"}
-      description={isEditing ? undefined : "Tulis refleksi pagimu untuk memulai hari dengan jelas."}
+      title={isEditing ? "Edit Journal" : isMorning ? "Journal Pagi" : "Journal Malam"}
+      description={
+        isEditing
+          ? undefined
+          : isMorning
+            ? "Atur niat & energi untuk memulai hari dengan jelas."
+            : "Tutup hari dengan refleksi — apa yang berjalan baik dan pelajarannya."
+      }
     >
+      {/* Slot switcher */}
+      <div className="mb-5 flex rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-gray-700 dark:bg-gray-800">
+        <button
+          type="button"
+          onClick={() => onSlotChange("morning")}
+          className={cn(
+            "flex-1 rounded-lg px-4 py-2 text-sm font-medium transition",
+            isMorning ? "bg-blue-600 text-white shadow-sm" : "text-gray-600 hover:text-gray-900 dark:text-gray-300",
+          )}
+        >
+          🌅 Pagi
+        </button>
+        <button
+          type="button"
+          onClick={() => onSlotChange("evening")}
+          className={cn(
+            "flex-1 rounded-lg px-4 py-2 text-sm font-medium transition",
+            !isMorning ? "bg-blue-600 text-white shadow-sm" : "text-gray-600 hover:text-gray-900 dark:text-gray-300",
+          )}
+        >
+          🌙 Malam
+        </button>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Mood */}
         <div>
-          <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Bagaimana perasaanmu?</p>
+          <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+            {isMorning ? "Bagaimana perasaanmu sekarang?" : "Bagaimana perasaanmu di penghujung hari?"}
+          </p>
           <div className="flex gap-2">
             {MOOD_OPTIONS.map((m) => (
               <button
@@ -104,7 +148,7 @@ export function JournalForm({ journal, onSaved }: JournalFormProps) {
 
         {/* Prompts */}
         <div className="space-y-4">
-          {PROMPT_FIELDS.map((p) => (
+          {promptList.map((p) => (
             <div key={p.key}>
               <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 {p.label}
@@ -112,13 +156,8 @@ export function JournalForm({ journal, onSaved }: JournalFormProps) {
               <textarea
                 rows={3}
                 placeholder={p.placeholder}
-                value={p.key === "gratitude" ? gratitude : p.key === "intention" ? intention : affirmation}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  if (p.key === "gratitude") setGratitude(v);
-                  else if (p.key === "intention") setIntention(v);
-                  else setAffirmation(v);
-                }}
+                value={prompts[p.key] ?? ""}
+                onChange={(e) => setPrompt(p.key, e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
               />
             </div>
@@ -127,7 +166,7 @@ export function JournalForm({ journal, onSaved }: JournalFormProps) {
 
         <div className="flex gap-3">
           <Button type="submit" loading={saving} className="flex-1">
-            {isEditing ? "Simpan Perubahan" : "Simpan Journal"}
+            {isEditing ? "Simpan Perubahan" : isMorning ? "Simpan Journal Pagi" : "Simpan Journal Malam"}
           </Button>
           {isEditing && journal && (
             <Button

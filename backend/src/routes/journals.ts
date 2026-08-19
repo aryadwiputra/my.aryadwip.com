@@ -11,28 +11,37 @@ import type { AppEnv } from "../types";
 const journalRoutes = new Hono<AppEnv>().use("*", authMiddleware);
 
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Format tanggal harus YYYY-MM-DD");
+const slotSchema = z.enum(["morning", "evening"]);
 const moodSchema = z.enum(["great", "good", "okay", "low", "bad"]);
 const promptsSchema = z.object({
+  // morning
   gratitude: z.string().optional(),
   intention: z.string().optional(),
   affirmation: z.string().optional(),
+  // evening
+  win: z.string().optional(),
+  wentWell: z.string().optional(),
+  toImprove: z.string().optional(),
+  lesson: z.string().optional(),
 });
 
 const createSchema = z.object({
   date: dateSchema,
+  slot: slotSchema.optional(),
   mood: moodSchema.optional(),
   energy: z.number().int().min(1).max(5).optional(),
   prompts: promptsSchema.optional(),
 });
 
 const updateSchema = z.object({
+  slot: slotSchema.optional(),
   mood: moodSchema.optional(),
   energy: z.number().int().min(1).max(5).optional(),
   prompts: promptsSchema.optional(),
 });
 
 type JournalRow = (typeof journalsTable)["$inferSelect"];
-type Prompts = { gratitude?: string; intention?: string; affirmation?: string };
+type Prompts = Record<string, string | undefined>;
 
 function parsePrompts(raw: string | null): Prompts {
   if (!raw) return {};
@@ -47,6 +56,7 @@ function serialize(j: JournalRow) {
   return {
     id: j.id,
     date: j.date,
+    slot: j.slot ?? "morning",
     mood: j.mood,
     energy: j.energy,
     prompts: parsePrompts(j.prompts),
@@ -55,12 +65,13 @@ function serialize(j: JournalRow) {
   };
 }
 
-// GET /api/journals?from=&to=&date=
+// GET /api/journals?from=&to=&date=&slot=
 journalRoutes.get("/", (c) => {
   const userId = c.get("userId");
   const from = c.req.query("from");
   const to = c.req.query("to");
   const date = c.req.query("date");
+  const slot = c.req.query("slot");
 
   const rows = db.select().from(journalsTable).where(eq(journalsTable.userId, userId)).all();
   let filtered = rows;
@@ -69,6 +80,7 @@ journalRoutes.get("/", (c) => {
     if (from) filtered = filtered.filter((r) => r.date >= from);
     if (to) filtered = filtered.filter((r) => r.date <= to);
   }
+  if (slot) filtered = filtered.filter((r) => (r.slot ?? "morning") === slot);
   filtered.sort((a, b) => b.date.localeCompare(a.date));
   return c.json({ journals: filtered.map(serialize) }, 200);
 });
@@ -119,16 +131,22 @@ journalRoutes.post(
   zValidator("json", createSchema),
   (c) => {
     const userId = c.get("userId");
-    const { date, mood, energy, prompts } = c.req.valid("json");
+    const { date, slot = "morning", mood, energy, prompts } = c.req.valid("json");
 
     const existing = db
       .select()
       .from(journalsTable)
-      .where(and(eq(journalsTable.userId, userId), eq(journalsTable.date, date)))
+      .where(
+        and(
+          eq(journalsTable.userId, userId),
+          eq(journalsTable.date, date),
+          eq(journalsTable.slot, slot),
+        ),
+      )
       .get();
     if (existing) {
       return c.json(
-        { error: "Conflict", message: "Journal untuk tanggal ini sudah ada. Gunakan edit." },
+        { error: "Conflict", message: `Journal ${slot} untuk tanggal ini sudah ada. Gunakan edit.` },
         409,
       );
     }
@@ -140,6 +158,7 @@ journalRoutes.post(
         id,
         userId,
         date,
+        slot,
         mood: mood ?? null,
         energy: energy ?? null,
         prompts: prompts ? JSON.stringify(prompts) : null,
@@ -182,6 +201,7 @@ journalRoutes.put(
 
     db.update(journalsTable)
       .set({
+        slot: body.slot !== undefined ? body.slot : existing.slot,
         mood: body.mood !== undefined ? body.mood : existing.mood,
         energy: body.energy !== undefined ? body.energy : existing.energy,
         prompts: body.prompts ? JSON.stringify(body.prompts) : existing.prompts,

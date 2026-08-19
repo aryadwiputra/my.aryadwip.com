@@ -28,9 +28,10 @@ export const journals = sqliteTable("journals", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   date: text("date").notNull(), // YYYY-MM-DD
+  slot: text("slot").notNull().default("morning"), // morning | evening
   mood: text("mood"), // great | good | okay | low | bad
   energy: integer("energy"), // 1-5
-  prompts: text("prompts"), // JSON { gratitude, intention, affirmation }
+  prompts: text("prompts"), // JSON { gratitude, intention, affirmation } for morning; { win, wentWell, toImprove, lesson } for evening
   createdAt: integer("created_at").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });

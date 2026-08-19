@@ -14,6 +14,12 @@ function moodEmoji(mood?: string | null) {
   return MOOD_OPTIONS.find((m) => m.value === mood)?.emoji ?? "📝";
 }
 
+function slotBadge(slot: string) {
+  return slot === "evening"
+    ? { text: "🌙 Malam", cls: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300" }
+    : { text: "🌅 Pagi", cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" };
+}
+
 export function JournalList({ journals, activeId, onSelect }: JournalListProps) {
   if (journals.length === 0) {
     return (
@@ -27,8 +33,15 @@ export function JournalList({ journals, activeId, onSelect }: JournalListProps) 
     <div className="space-y-3">
       {journals.map((j) => {
         const preview =
-          j.prompts.intention || j.prompts.gratitude || j.prompts.affirmation || "Tidak ada catatan";
+          j.prompts.intention ||
+          j.prompts.gratitude ||
+          j.prompts.affirmation ||
+          j.prompts.win ||
+          j.prompts.wentWell ||
+          j.prompts.lesson ||
+          "Tidak ada catatan";
         const isActive = j.id === activeId;
+        const badge = slotBadge(j.slot);
         return (
           <button
             key={j.id}
@@ -45,6 +58,9 @@ export function JournalList({ journals, activeId, onSelect }: JournalListProps) 
               <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                 <CalendarDays className="h-4 w-4" />
                 {formatDate(j.date)}
+                <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", badge.cls)}>
+                  {badge.text}
+                </span>
                 {j.energy ? (
                   <span className="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs dark:bg-gray-800">
                     Energi {j.energy}/5
