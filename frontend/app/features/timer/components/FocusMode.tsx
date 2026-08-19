@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, useCallback, type ReactNode } from "react";
 import { X, Volume2, VolumeX } from "lucide-react";
 import { startAmbient, stopAmbient, isAmbientOn } from "../ambient";
 
@@ -8,16 +8,88 @@ interface FocusModeProps {
   taskName?: string;
 }
 
+// Attempt to enter real browser fullscreen; falls back to overlay-only if the
+// browser rejects it (some mobile browsers restrict requestFullscreen).
+async function enterFullscreen(el: HTMLElement): Promise<boolean> {
+  try {
+    if (el.requestFullscreen) {
+      await el.requestFullscreen();
+      return true;
+    }
+    const w = el as unknown as { webkitRequestFullscreen?: () => Promise<void> };
+    if (w.webkitRequestFullscreen) {
+      await w.webkitRequestFullscreen();
+      return true;
+    }
+  } catch {
+    /* browser rejected fullscreen — fall back to overlay */
+  }
+  return false;
+}
+
+function exitFullscreen() {
+  try {
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen();
+    } else {
+      const d = document as unknown as { webkitExitFullscreen?: () => void };
+      if (d.webkitExitFullscreen) d.webkitExitFullscreen();
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+function isFullscreen(): boolean {
+  return Boolean(
+    document.fullscreenElement ||
+      (document as unknown as { webkitFullscreenElement?: Element }).webkitFullscreenElement,
+  );
+}
+
 export function FocusMode({ onExit, children, taskName }: FocusModeProps) {
   const [ambient, setAmbient] = useState(false);
+  const [fsError, setFsError] = useState(false);
 
+  const handleExit = useCallback(() => {
+    if (isFullscreen()) exitFullscreen();
+    onExit();
+  }, [onExit]);
+
+  // Enter real fullscreen on mount; fall back gracefully.
+  useEffect(() => {
+    const el = document.getElementById("focus-mode-root");
+    if (el) {
+      enterFullscreen(el).then((ok) => {
+        if (!ok) setFsError(true);
+      });
+    }
+    return () => {
+      if (isFullscreen()) exitFullscreen();
+    };
+  }, []);
+
+  // Esc exits both fullscreen and focus mode.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onExit();
+      if (e.key === "Escape") handleExit();
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onExit]);
+  }, [handleExit]);
+
+  // If the user leaves fullscreen manually (Esc browser) while still in focus
+  // mode, close focus mode too (keeps everything in sync).
+  useEffect(() => {
+    function onChange() {
+      if (!isFullscreen() && !fsError) {
+        // exit fullscreen without re-entering; close focus mode
+        onExit();
+      }
+    }
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, [onExit, fsError]);
 
   // Stop ambient sound when leaving focus mode.
   useEffect(() => {
@@ -37,7 +109,10 @@ export function FocusMode({ onExit, children, taskName }: FocusModeProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-gray-950">
+    <div
+      id="focus-mode-root"
+      className="fixed inset-0 z-50 flex flex-col bg-gray-950"
+    >
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 pt-[max(env(safe-area-inset-top),1rem)] sm:px-6">
         <div className="min-w-0">
@@ -61,7 +136,7 @@ export function FocusMode({ onExit, children, taskName }: FocusModeProps) {
             {ambient ? "Ambience On" : "Ambience"}
           </button>
           <button
-            onClick={onExit}
+            onClick={handleExit}
             aria-label="Keluar dari mode fokus"
             className="flex items-center gap-1.5 rounded-full border border-gray-700 px-3 py-1.5 text-sm text-gray-300 transition hover:bg-gray-800 hover:text-white"
           >
