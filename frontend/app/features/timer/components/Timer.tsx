@@ -74,10 +74,12 @@ export function Timer({ taskId, onComplete, variant = "default" }: TimerProps) {
     try {
       const session = await startMutation.mutateAsync({ duration: minutes, taskId });
       setSessionId(session.id);
+      // Anchor the start time but leave running=false so start() begins the
+      // interval (start() bails early if running is already true).
       useTimerStore.setState({
         startedAt: Date.now(),
         remainingMs: minutes * 60_000,
-        running: true,
+        running: false,
       });
       start();
     } catch (err) {
