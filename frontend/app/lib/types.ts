@@ -149,3 +149,21 @@ export interface DashboardData {
   };
   week: DashboardDay[];
 }
+
+export interface Habit {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  createdAt: number;
+  updatedAt: number;
+  doneToday: boolean;
+  streak: number;
+  totalDone: number;
+}
+
+export interface HabitPayload {
+  name: string;
+  icon?: string;
+  color?: string;
+}

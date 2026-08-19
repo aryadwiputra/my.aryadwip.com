@@ -86,3 +86,27 @@ export const focusSessions = sqliteTable("focus_sessions", {
   status: text("status").notNull().default("active"), // active | completed | cancelled
   createdAt: integer("created_at").notNull(),
 });
+
+export const habits = sqliteTable("habits", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  icon: text("icon").notNull().default("check"), // emoji or lucide key
+  color: text("color").notNull().default("blue"),
+  createdAt: integer("created_at").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+});
+
+export const habitLogs = sqliteTable("habit_logs", {
+  id: text("id").primaryKey(),
+  habitId: text("habit_id")
+    .notNull()
+    .references(() => habits.id, { onDelete: "cascade" }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  date: text("date").notNull(), // YYYY-MM-DD
+  createdAt: integer("created_at").notNull(),
+});

@@ -93,7 +93,25 @@ export function ensureSchema() {
       status TEXT NOT NULL DEFAULT 'active',
       created_at INTEGER NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS habits (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      icon TEXT NOT NULL DEFAULT 'check',
+      color TEXT NOT NULL DEFAULT 'blue',
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS habit_logs (
+      id TEXT PRIMARY KEY,
+      habit_id TEXT NOT NULL REFERENCES habits(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      date TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
     CREATE INDEX IF NOT EXISTS idx_tasks_user ON tasks(user_id);
     CREATE UNIQUE INDEX IF NOT EXISTS idx_journals_user_date ON journals(user_id, date);
+    CREATE INDEX IF NOT EXISTS idx_habits_user ON habits(user_id);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_habit_logs_habit_date ON habit_logs(habit_id, date);
   `);
 }

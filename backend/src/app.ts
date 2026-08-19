@@ -8,6 +8,7 @@ import tasks from "./routes/tasks";
 import ideas from "./routes/ideas";
 import notes from "./routes/notes";
 import sessions from "./routes/sessions";
+import habits from "./routes/habits";
 import dashboard from "./routes/dashboard";
 import settings from "./routes/settings";
 import type { AppEnv } from "./types";
@@ -25,6 +26,7 @@ export function createApp() {
   app.route("/api/ideas", ideas);
   app.route("/api/notes", notes);
   app.route("/api/sessions", sessions);
+  app.route("/api/habits", habits);
   app.route("/api/dashboard", dashboard);
   app.route("/api/settings", settings);
 

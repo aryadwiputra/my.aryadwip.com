@@ -10,6 +10,7 @@ export default [
     route("tasks", "routes/tasks.tsx"),
     route("ideas", "routes/ideas.tsx"),
     route("notes", "routes/notes.tsx"),
+    route("habits", "routes/habits.tsx"),
     route("timer", "routes/timer.tsx"),
     route("settings", "routes/settings.tsx"),
   ]),

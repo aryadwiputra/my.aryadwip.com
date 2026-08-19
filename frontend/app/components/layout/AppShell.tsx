@@ -9,6 +9,7 @@ import {
   Timer,
   Settings,
   LogOut,
+  Repeat,
 } from "lucide-react";
 import { useAuthStore } from "~/stores/auth";
 import { logout } from "~/lib/authService";
@@ -25,6 +26,7 @@ const nav: NavItemDef[] = [
   { to: "/tasks", label: "Tasks", icon: <CheckSquare className="h-5 w-5" /> },
   { to: "/ideas", label: "Ideas", icon: <Lightbulb className="h-5 w-5" /> },
   { to: "/notes", label: "Notes", icon: <StickyNote className="h-5 w-5" /> },
+  { to: "/habits", label: "Habits", icon: <Repeat className="h-5 w-5" /> },
   { to: "/timer", label: "Focus Timer", icon: <Timer className="h-5 w-5" /> },
   { to: "/settings", label: "Settings", icon: <Settings className="h-5 w-5" /> },
 ];
@@ -35,6 +37,7 @@ const pageTitles: Record<string, string> = {
   "/tasks": "Tasks",
   "/ideas": "Ideas",
   "/notes": "Notes",
+  "/habits": "Habits",
   "/timer": "Focus Timer",
   "/settings": "Settings",
 };
