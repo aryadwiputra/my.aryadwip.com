@@ -101,6 +101,21 @@ sessionRoutes.post("/", zValidator("json", createSchema), (c) => {
   const { duration, taskId } = c.req.valid("json");
   const id = nanoid();
   const now = Date.now();
+
+  // Auto-cancel any lingering active session before starting a new one,
+  // so the user never ends up with two active sessions.
+  const active = db
+    .select()
+    .from(sessionsTable)
+    .where(and(eq(sessionsTable.userId, userId), eq(sessionsTable.status, "active")))
+    .all();
+  for (const s of active) {
+    db.update(sessionsTable)
+      .set({ status: "cancelled", endedAt: now })
+      .where(eq(sessionsTable.id, s.id))
+      .run();
+  }
+
   db.insert(sessionsTable)
     .values({ id, userId, taskId: taskId ?? null, duration, startedAt: now, status: "active", createdAt: now })
     .run();

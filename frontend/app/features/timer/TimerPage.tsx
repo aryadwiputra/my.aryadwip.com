@@ -6,7 +6,7 @@ import { SkeletonCard } from "~/components/ui/Skeleton";
 import { formatDateTime } from "~/lib/date";
 import { toastSuccess } from "~/lib/toast";
 import { useTasks } from "~/features/tasks/hooks";
-import { useSessions, useSessionStats, useTodaySessions } from "./hooks";
+import { useSessions, useSessionStats, useTodaySessions, fetchActiveSession } from "./hooks";
 import { useTimerStore } from "./timerStore";
 import { Timer } from "./components/Timer";
 import { FocusMode } from "./components/FocusMode";
@@ -57,6 +57,19 @@ export default function TimerPage() {
   useEffect(() => {
     useTimerStore.getState().setOverlay(focusMode);
   }, [focusMode]);
+
+  // Restore active session from backend on mount (refresh / cross-device).
+  useEffect(() => {
+    const store = useTimerStore.getState();
+    // Only restore if we don't already have an active session in store.
+    if (store.sessionId) return;
+    fetchActiveSession().then((session) => {
+      if (session) {
+        store.restore(session);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Single timer instance shared between the page and the focus overlay.
   const timer = <Timer taskId={taskId || undefined} onComplete={handleComplete} />;

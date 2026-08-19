@@ -65,15 +65,21 @@ export function Timer({ taskId, onComplete, variant = "default" }: TimerProps) {
       pause();
       return;
     }
-    // resume
-    if (remainingMs < totalMs && sessionId) {
+    // resume from pause — same session continues
+    if (sessionId) {
       start();
       return;
     }
-    start();
+    // fresh start — create backend session, then anchor & run
     try {
       const session = await startMutation.mutateAsync({ duration: minutes, taskId });
       setSessionId(session.id);
+      useTimerStore.setState({
+        startedAt: Date.now(),
+        remainingMs: minutes * 60_000,
+        running: true,
+      });
+      start();
     } catch (err) {
       pause();
       toastError(err instanceof Error ? err.message : "Gagal memulai sesi");

@@ -57,3 +57,18 @@ export function useEndSession() {
     },
   });
 }
+
+/**
+ * Find an active session from the backend and restore it into the timer store.
+ * Used on mount so refresh / cross-device resumes the countdown.
+ * Returns the active session if found, else null.
+ */
+export async function fetchActiveSession(): Promise<FocusSession | null> {
+  try {
+    const res = await api<TodaySummary>("/api/sessions/today");
+    const active = res.sessions.find((s) => s.status === "active");
+    return active ?? null;
+  } catch {
+    return null;
+  }
+}
