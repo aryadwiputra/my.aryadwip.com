@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Download, Trash2 } from "lucide-react";
+import { Download, Trash2, Bell } from "lucide-react";
 import { useAuthStore } from "~/stores/auth";
 import { useThemeStore, type Theme } from "~/lib/theme";
 import { logout } from "~/lib/authService";
@@ -8,6 +8,7 @@ import { Card } from "~/components/ui/Card";
 import { Input } from "~/components/ui/Input";
 import { cn } from "~/lib/cn";
 import { toastError, toastSuccess } from "~/lib/toast";
+import { requestNotificationPermission } from "~/lib/reminders";
 import { downloadJson, useChangePassword, useDeleteAccount, useExportData } from "./hooks";
 
 const THEMES: { value: Theme; label: string }[] = [
@@ -27,6 +28,22 @@ export default function SettingsPage() {
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [notifStatus, setNotifStatus] = useState<string>(
+    typeof window !== "undefined" && "Notification" in window
+      ? Notification.permission
+      : "unsupported",
+  );
+
+  async function handleEnableNotifications() {
+    const granted = await requestNotificationPermission();
+    if (granted) {
+      setNotifStatus("granted");
+      toastSuccess("Notifikasi diaktifkan");
+    } else {
+      setNotifStatus("denied");
+      toastError("Izin notifikasi ditolak. Aktifkan di pengaturan browser.");
+    }
+  }
 
   async function handleChangePassword(e: React.FormEvent) {
     e.preventDefault();
@@ -99,6 +116,30 @@ export default function SettingsPage() {
               {t.label}
             </button>
           ))}
+        </div>
+      </Card>
+
+      <Card title="Notifikasi">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium text-gray-900 dark:text-white">Reminder task due</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Dapatkan notifikasi saat ada task yang jatuh tempo hari ini.
+            </p>
+          </div>
+          {notifStatus === "granted" ? (
+            <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-900/40 dark:text-green-300">
+              Aktif
+            </span>
+          ) : notifStatus === "denied" ? (
+            <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-900/40 dark:text-red-300">
+              Diblokir
+            </span>
+          ) : (
+            <Button variant="secondary" onClick={handleEnableNotifications}>
+              <Bell className="h-4 w-4" /> Aktifkan
+            </Button>
+          )}
         </div>
       </Card>
 

@@ -11,6 +11,7 @@ import {
   LogOut,
   Repeat,
   Search,
+  CalendarDays,
 } from "lucide-react";
 import { useAuthStore } from "~/stores/auth";
 import { logout } from "~/lib/authService";
@@ -22,6 +23,7 @@ import { CreateSheet } from "~/features/shared/CreateSheet";
 import { QuickCaptureGlobal } from "~/features/ideas/components/QuickCapture";
 import { SearchModal } from "~/features/search/SearchModal";
 import { SyncIndicator } from "./SyncIndicator";
+import { checkDueTasks } from "~/lib/reminders";
 
 const nav: NavItemDef[] = [
   { to: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
@@ -30,6 +32,7 @@ const nav: NavItemDef[] = [
   { to: "/ideas", label: "Ideas", icon: <Lightbulb className="h-5 w-5" /> },
   { to: "/notes", label: "Notes", icon: <StickyNote className="h-5 w-5" /> },
   { to: "/habits", label: "Habits", icon: <Repeat className="h-5 w-5" /> },
+  { to: "/calendar", label: "Kalender", icon: <CalendarDays className="h-5 w-5" /> },
   { to: "/timer", label: "Focus Timer", icon: <Timer className="h-5 w-5" /> },
   { to: "/settings", label: "Settings", icon: <Settings className="h-5 w-5" /> },
 ];
@@ -41,6 +44,7 @@ const pageTitles: Record<string, string> = {
   "/ideas": "Ideas",
   "/notes": "Notes",
   "/habits": "Habits",
+  "/calendar": "Kalender",
   "/timer": "Focus Timer",
   "/settings": "Settings",
 };
@@ -122,6 +126,13 @@ export function AppShell() {
       useAuthStore.getState().setHydrated(true);
     }
   }, [hydrated]);
+
+  // Check for due tasks once on load (after auth is ready).
+  useEffect(() => {
+    if (hydrated && user) {
+      checkDueTasks();
+    }
+  }, [hydrated, user]);
 
   // IMPORTANT: Only redirect after hydration. On SSR/first paint the store is
   // not rehydrated from localStorage yet, so `user` is always null — redirecting

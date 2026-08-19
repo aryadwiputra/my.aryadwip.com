@@ -9,6 +9,7 @@ import { useTasks } from "~/features/tasks/hooks";
 import { useSessions, useSessionStats, useTodaySessions } from "./hooks";
 import { Timer } from "./components/Timer";
 import { FocusMode } from "./components/FocusMode";
+import { FocusJournalPrompt } from "./components/FocusJournalPrompt";
 
 function statCard(value: string, label: string) {
   return (
@@ -27,6 +28,7 @@ export default function TimerPage() {
 
   const [taskId, setTaskId] = useState<string>("");
   const [focusMode, setFocusMode] = useState(false);
+  const [journalPrompt, setJournalPrompt] = useState<{ minutes: number } | null>(null);
 
   const linkedTask = tasks.find((t) => t.id === taskId);
 
@@ -36,6 +38,8 @@ export default function TimerPage() {
         ? `Sesi ${minutes} menit selesai! Lakukan stretch & rehidrasi.`
         : `Sesi ${minutes} menit selesai! Istirahat 5-10 menit. 💪`;
     toastSuccess(text);
+    // Show auto-journal prompt
+    setJournalPrompt({ minutes });
   }
 
   const timer = <Timer taskId={taskId || undefined} onComplete={handleComplete} />;
@@ -107,6 +111,16 @@ export default function TimerPage() {
         <FocusMode onExit={() => setFocusMode(false)} taskName={linkedTask?.title}>
           <Timer taskId={taskId || undefined} onComplete={handleComplete} variant="dark" />
         </FocusMode>
+      )}
+
+      {/* Auto-journal prompt after focus session */}
+      {journalPrompt && (
+        <FocusJournalPrompt
+          open
+          minutes={journalPrompt.minutes}
+          taskName={linkedTask?.title}
+          onClose={() => setJournalPrompt(null)}
+        />
       )}
 
       {/* Session history */}

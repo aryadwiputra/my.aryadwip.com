@@ -4,7 +4,7 @@ import { zValidator } from "@hono/zod-validator";
 import { eq, and } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { db } from "../db";
-import { journals as journalsTable, tasks as tasksTable, focusSessions as sessionsTable, weeklyReviews as reviewsTable, habits as habitsTable } from "../db/schema";
+import { journals as journalsTable, tasks as tasksTable, focusSessions as sessionsTable, weeklyReviews as reviewsTable, habits as habitsTable, habitLogs as habitLogsTable } from "../db/schema";
 import { authMiddleware } from "../middleware/auth";
 import type { AppEnv } from "../types";
 
@@ -208,5 +208,34 @@ dashboard.post(
     return c.json({ review: row }, 201);
   },
 );
+
+// GET /api/dashboard/calendar?month=YYYY-MM
+dashboard.get("/calendar", (c) => {
+  const userId = c.get("userId");
+  const month = c.req.query("month");
+  if (!month || !/^\d{4}-\d{2}$/.test(month)) {
+    return c.json({ error: "month query parameter required (YYYY-MM)" }, 400);
+  }
+  const [y, m] = month.split("-").map(Number);
+  const start = new Date(y, m - 1, 1);
+  const end = new Date(y, m, 0); // last day of month
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const startKey = `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`;
+  const endKey = `${end.getFullYear()}-${pad(end.getMonth() + 1)}-${pad(end.getDate())}`;
+
+  const tasks = db.select().from(tasksTable).where(eq(tasksTable.userId, userId)).all();
+  const journals = db.select().from(journalsTable).where(eq(journalsTable.userId, userId)).all();
+  const habitLogs = db.select().from(habitLogsTable).where(eq(habitLogsTable.userId, userId)).all();
+
+  const monthTasks = tasks.filter((t) => t.dueDate && t.dueDate >= startKey && t.dueDate <= endKey);
+  const monthJournals = journals.filter((j) => j.date >= startKey && j.date <= endKey);
+  const monthHabitLogs = habitLogs.filter((l) => l.date >= startKey && l.date <= endKey);
+
+  return c.json({
+    tasks: monthTasks.map((t) => ({ id: t.id, date: t.dueDate, title: t.title, status: t.status, priority: t.priority })),
+    journals: monthJournals.map((j) => ({ id: j.id, date: j.date, mood: j.mood })),
+    habitLogs: monthHabitLogs.map((l) => ({ id: l.id, date: l.date, habitId: l.habitId })),
+  }, 200);
+});
 
 export default dashboard;
