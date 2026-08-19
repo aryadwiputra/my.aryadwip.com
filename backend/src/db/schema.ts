@@ -110,3 +110,16 @@ export const habitLogs = sqliteTable("habit_logs", {
   date: text("date").notNull(), // YYYY-MM-DD
   createdAt: integer("created_at").notNull(),
 });
+
+export const weeklyReviews = sqliteTable("weekly_reviews", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  weekStart: text("week_start").notNull(), // YYYY-MM-DD (Monday)
+  whatWentWell: text("what_went_well"),
+  whatToImprove: text("what_to_improve"),
+  nextPriorities: text("next_priorities"),
+  createdAt: integer("created_at").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+});

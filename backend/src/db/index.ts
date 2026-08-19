@@ -113,5 +113,16 @@ export function ensureSchema() {
     CREATE UNIQUE INDEX IF NOT EXISTS idx_journals_user_date ON journals(user_id, date);
     CREATE INDEX IF NOT EXISTS idx_habits_user ON habits(user_id);
     CREATE UNIQUE INDEX IF NOT EXISTS idx_habit_logs_habit_date ON habit_logs(habit_id, date);
+    CREATE TABLE IF NOT EXISTS weekly_reviews (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      week_start TEXT NOT NULL,
+      what_went_well TEXT,
+      what_to_improve TEXT,
+      next_priorities TEXT,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_weekly_reviews_user_week ON weekly_reviews(user_id, week_start);
   `);
 }

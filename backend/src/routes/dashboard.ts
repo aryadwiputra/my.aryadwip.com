@@ -1,7 +1,10 @@
 import { Hono } from "hono";
-import { eq } from "drizzle-orm";
+import { z } from "zod";
+import { zValidator } from "@hono/zod-validator";
+import { eq, and } from "drizzle-orm";
+import { nanoid } from "nanoid";
 import { db } from "../db";
-import { journals as journalsTable, tasks as tasksTable, focusSessions as sessionsTable } from "../db/schema";
+import { journals as journalsTable, tasks as tasksTable, focusSessions as sessionsTable, weeklyReviews as reviewsTable } from "../db/schema";
 import { authMiddleware } from "../middleware/auth";
 import type { AppEnv } from "../types";
 
@@ -112,5 +115,70 @@ dashboard.get("/", (c) => {
     200,
   );
 });
+
+// GET /api/dashboard/reviews?weekStart=YYYY-MM-DD
+dashboard.get("/reviews", (c) => {
+  const userId = c.get("userId");
+  const weekStart = c.req.query("weekStart");
+  if (!weekStart) {
+    return c.json({ error: "weekStart query parameter required" }, 400);
+  }
+  const row = db
+    .select()
+    .from(reviewsTable)
+    .where(and(eq(reviewsTable.userId, userId), eq(reviewsTable.weekStart, weekStart)))
+    .get();
+  if (!row) {
+    return c.json({ review: null }, 200);
+  }
+  return c.json({ review: { ...row } }, 200);
+});
+
+// POST /api/dashboard/reviews
+dashboard.post(
+  "/reviews",
+  zValidator("json", z.object({
+    weekStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "weekStart format YYYY-MM-DD"),
+    whatWentWell: z.string().optional(),
+    whatToImprove: z.string().optional(),
+    nextPriorities: z.string().optional(),
+  })),
+  (c) => {
+    const userId = c.get("userId");
+    const { weekStart, whatWentWell, whatToImprove, nextPriorities } = c.req.valid("json");
+    const now = Date.now();
+    const existing = db
+      .select()
+      .from(reviewsTable)
+      .where(and(eq(reviewsTable.userId, userId), eq(reviewsTable.weekStart, weekStart)))
+      .get();
+    if (existing) {
+      db.update(reviewsTable)
+        .set({
+          whatWentWell: whatWentWell ?? existing.whatWentWell,
+          whatToImprove: whatToImprove ?? existing.whatToImprove,
+          nextPriorities: nextPriorities ?? existing.nextPriorities,
+          updatedAt: now,
+        })
+        .where(and(eq(reviewsTable.userId, userId), eq(reviewsTable.weekStart, weekStart)))
+        .run();
+      const updated = db.select().from(reviewsTable).where(eq(reviewsTable.id, existing.id)).get()!;
+      return c.json({ review: updated }, 200);
+    }
+    const id = nanoid();
+    db.insert(reviewsTable).values({
+      id,
+      userId,
+      weekStart,
+      whatWentWell: whatWentWell ?? null,
+      whatToImprove: whatToImprove ?? null,
+      nextPriorities: nextPriorities ?? null,
+      createdAt: now,
+      updatedAt: now,
+    }).run();
+    const row = db.select().from(reviewsTable).where(eq(reviewsTable.id, id)).get()!;
+    return c.json({ review: row }, 201);
+  },
+);
 
 export default dashboard;
