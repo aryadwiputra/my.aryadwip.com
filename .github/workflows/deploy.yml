@@ -21,6 +21,10 @@ jobs:
         run: |
           cd backend
           npx tsc --noEmit
+      - name: Backup database (before deploy)
+        run: |
+          cd backend
+          bash scripts/backup-db.sh 2>/dev/null || echo "No database to backup"
       - name: Deploy backend to VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
