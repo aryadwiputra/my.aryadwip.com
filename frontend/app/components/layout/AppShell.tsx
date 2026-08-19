@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigate, Outlet, useLocation } from "react-router";
 import {
   LayoutDashboard,
@@ -10,6 +10,7 @@ import {
   Settings,
   LogOut,
   Repeat,
+  Search,
 } from "lucide-react";
 import { useAuthStore } from "~/stores/auth";
 import { logout } from "~/lib/authService";
@@ -19,6 +20,7 @@ import { BottomNav } from "./BottomNav";
 import { MoreSheet } from "./MoreSheet";
 import { CreateSheet } from "~/features/shared/CreateSheet";
 import { QuickCaptureGlobal } from "~/features/ideas/components/QuickCapture";
+import { SearchModal } from "~/features/search/SearchModal";
 
 const nav: NavItemDef[] = [
   { to: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
@@ -65,6 +67,14 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         </div>
         <div className="flex items-center gap-1">
           <button
+            onClick={() => (window as any).__claritySearch?.()}
+            aria-label="Cari"
+            title="Cari (Ctrl+K atau /)"
+            className="flex flex-1 items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            <Search className="h-4 w-4" /> Cari
+          </button>
+          <button
             onClick={() => logout().then(() => window.location.assign("/login"))}
             className="flex flex-1 items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
           >
@@ -81,6 +91,27 @@ export function AppShell() {
   const user = useAuthStore((s) => s.user);
   const location = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setSearchOpen((v) => !v);
+      }
+      if (e.key === "/" && !e.ctrlKey && !e.metaKey && document.activeElement?.tagName !== "INPUT" && document.activeElement?.tagName !== "TEXTAREA") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    // Expose search toggle globally for sidebar button
+    (window as any).__claritySearch = () => setSearchOpen(true);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      delete (window as any).__claritySearch;
+    };
+  }, []);
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -99,6 +130,13 @@ export function AppShell() {
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-gray-200 bg-white/95 px-4 py-3 backdrop-blur dark:border-gray-800 dark:bg-gray-900/95 lg:hidden">
         <span className="text-base font-semibold text-gray-900 dark:text-white">{title}</span>
         <div className="flex items-center gap-1">
+          <button
+            onClick={() => setSearchOpen(true)}
+            aria-label="Cari"
+            className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            <Search className="h-5 w-5" />
+          </button>
           <ThemeToggle />
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-medium text-white">
             {user?.name?.charAt(0)?.toUpperCase() ?? "?"}
@@ -117,6 +155,7 @@ export function AppShell() {
       <BottomNav onMore={() => setMoreOpen(true)} />
       <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} />
       <CreateSheet />
+      <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
 
       <QuickCaptureGlobal />
     </div>
