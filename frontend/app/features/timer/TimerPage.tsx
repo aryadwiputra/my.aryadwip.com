@@ -6,7 +6,7 @@ import { SkeletonCard } from "~/components/ui/Skeleton";
 import { formatDateTime } from "~/lib/date";
 import { toastSuccess } from "~/lib/toast";
 import { useTasks } from "~/features/tasks/hooks";
-import { useSessions, useSessionStats, useTodaySessions, fetchActiveSession } from "./hooks";
+import { useSessions, useSessionStats, useTodaySessions, fetchActiveSession, useEndSession } from "./hooks";
 import { useTimerStore } from "./timerStore";
 import { Timer } from "./components/Timer";
 import { FocusMode } from "./components/FocusMode";
@@ -32,23 +32,26 @@ export default function TimerPage() {
   const [journalPrompt, setJournalPrompt] = useState<{ minutes: number } | null>(null);
 
   const linkedTask = tasks.find((t) => t.id === taskId);
+  const endSession = useEndSession();
 
-  function handleComplete(minutes: number) {
+  // Called by the timer store when the countdown reaches 0: mark the backend
+  // session completed, then notify + prompt. Runs async so the session is
+  // recorded before we show feedback (fixes "0:00 stuck / focus minutes not added").
+  const handleComplete = (sessionId: string | null, minutes: number) => {
+    if (sessionId) {
+      endSession.mutate({ id: sessionId, status: "completed" });
+    }
     const text =
       minutes >= 50
         ? `Sesi ${minutes} menit selesai! Lakukan stretch & rehidrasi.`
         : `Sesi ${minutes} menit selesai! Istirahat 5-10 menit. 💪`;
     toastSuccess(text);
-    // Show auto-journal prompt
     setJournalPrompt({ minutes });
-  }
+  };
 
   // Register completion handler once on the shared store.
   useEffect(() => {
-    useTimerStore.getState().setOnComplete(() => () => {
-      const m = useTimerStore.getState().minutes;
-      handleComplete(m);
-    });
+    useTimerStore.getState().setOnComplete(handleComplete);
     return () => useTimerStore.getState().setOnComplete(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -72,7 +75,9 @@ export default function TimerPage() {
   }, []);
 
   // Single timer instance shared between the page and the focus overlay.
-  const timer = <Timer taskId={taskId || undefined} onComplete={handleComplete} />;
+  // Completion is handled via the store's onComplete (registered above), not
+  // via the Timer's prop.
+  const timer = <Timer taskId={taskId || undefined} />;
 
   return (
     <div className="space-y-5 sm:space-y-6">

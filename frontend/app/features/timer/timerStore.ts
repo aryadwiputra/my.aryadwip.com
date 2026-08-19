@@ -13,13 +13,13 @@ interface TimerStore {
   custom: string;
   sessionId: string | null;
   overlay: boolean;
-  onComplete: (() => void) | null;
+  onComplete: ((sessionId: string | null, minutes: number) => void) | null;
   setMinutes: (m: number) => void;
   setCustom: (c: string) => void;
   setRunning: (r: boolean) => void;
   setSessionId: (id: string | null) => void;
   setOverlay: (v: boolean) => void;
-  setOnComplete: (fn: (() => void) | null) => void;
+  setOnComplete: (fn: ((sessionId: string | null, minutes: number) => void) | null) => void;
   // Restore an active session from the backend (refresh / cross-device).
   restore: (session: { id: string; duration: number; startedAt: number }) => void;
   // Timestamp-based: sisa waktu = (startedAt + durationMs) - now.
@@ -73,7 +73,7 @@ export const useTimerStore = create<TimerStore>()(
       },
 
       tick: () => {
-        const { startedAt, durationMs, onComplete } = get();
+        const { startedAt, durationMs, minutes, onComplete, sessionId } = get();
         if (!startedAt) return;
         const remaining = (startedAt + durationMs) - Date.now();
         if (remaining <= 0) {
@@ -81,21 +81,25 @@ export const useTimerStore = create<TimerStore>()(
             clearInterval(intervalId);
             intervalId = null;
           }
-          set({ remainingMs: 0, running: false });
-          onComplete?.();
+          // Clear the session so the UI returns to a fresh/startable state and
+          // the backend can be marked completed via onComplete.
+          set({ remainingMs: 0, running: false, sessionId: null, startedAt: null });
+          onComplete?.(sessionId, minutes);
         } else {
           set({ remainingMs: remaining });
         }
       },
 
       start: () => {
-        const { running, remainingMs, sessionId } = get();
+        const { running, remainingMs, durationMs, sessionId } = get();
         if (running) return;
         if (!sessionId) return; // must have a session started via API
+        // A finished session (0 remaining) must not resume — require a fresh start.
+        if (remainingMs <= 0) return;
         // Resume: re-anchor startedAt based on remaining time.
         set({
           running: true,
-          startedAt: Date.now() - (get().durationMs - remainingMs),
+          startedAt: Date.now() - (durationMs - remainingMs),
         });
         if (!intervalId) {
           intervalId = setInterval(() => get().tick(), 500);
