@@ -1,15 +1,12 @@
 import { useState } from "react";
 import { Check, Flame, Plus, Trash2 } from "lucide-react";
 import { Button } from "~/components/ui/Button";
-import { Input } from "~/components/ui/Input";
-import { Modal } from "~/components/ui/Modal";
 import { SkeletonCard } from "~/components/ui/Skeleton";
 import { cn } from "~/lib/cn";
-import { toastError, toastSuccess } from "~/lib/toast";
 import type { Habit } from "~/lib/types";
-import { useCreateHabit, useDeleteHabit, useHabits, useToggleHabit } from "./hooks";
+import { useDeleteHabit, useHabits, useToggleHabit } from "./hooks";
+import { HabitForm } from "./components/HabitForm";
 
-const ICONS = ["✅", "💧", "🏃", "📚", "🧘", "😴", "🥗", "✍️", "🎯", "💊"];
 const COLORS = [
   { value: "blue", class: "bg-blue-500" },
   { value: "green", class: "bg-green-500" },
@@ -60,32 +57,7 @@ function HabitItem({ habit }: { habit: Habit }) {
 
 export default function HabitPage() {
   const { data: habits = [], isLoading } = useHabits();
-  const create = useCreateHabit();
-
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [icon, setIcon] = useState("✅");
-  const [color, setColor] = useState("blue");
-  const [saving, setSaving] = useState(false);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!name.trim()) {
-      toastError("Nama habit wajib diisi");
-      return;
-    }
-    setSaving(true);
-    try {
-      await create.mutateAsync({ name: name.trim(), icon, color });
-      toastSuccess("Habit dibuat");
-      setName("");
-      setOpen(false);
-    } catch (err) {
-      toastError(err instanceof Error ? err.message : "Gagal membuat habit");
-    } finally {
-      setSaving(false);
-    }
-  }
 
   return (
     <div className="space-y-5 sm:space-y-6">
@@ -120,63 +92,7 @@ export default function HabitPage() {
         </div>
       )}
 
-      <Modal open={open} onClose={() => setOpen(false)} title="Habit Baru">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="Nama habit *"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Contoh: Minum air 2L"
-            autoFocus
-          />
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Ikon</label>
-            <div className="flex flex-wrap gap-2">
-              {ICONS.map((i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setIcon(i)}
-                  className={cn(
-                    "flex h-10 w-10 items-center justify-center rounded-lg border text-xl transition",
-                    icon === i
-                      ? "border-blue-600 bg-blue-50 dark:bg-blue-900/30"
-                      : "border-gray-200 hover:border-blue-400 dark:border-gray-700",
-                  )}
-                >
-                  {i}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Warna</label>
-            <div className="flex gap-2">
-              {COLORS.map((c) => (
-                <button
-                  key={c.value}
-                  type="button"
-                  onClick={() => setColor(c.value)}
-                  aria-label={`Warna ${c.value}`}
-                  className={cn(
-                    "h-8 w-8 rounded-full transition",
-                    c.class,
-                    color === c.value ? "ring-2 ring-offset-2 ring-gray-400" : "opacity-70 hover:opacity-100",
-                  )}
-                />
-              ))}
-            </div>
-          </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
-              Batal
-            </Button>
-            <Button type="submit" loading={saving}>
-              Buat Habit
-            </Button>
-          </div>
-        </form>
-      </Modal>
+      <HabitForm open={open} onClose={() => setOpen(false)} />
     </div>
   );
 }

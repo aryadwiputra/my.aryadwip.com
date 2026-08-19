@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type CreateType = "idea" | "task" | "note";
+export type CreateType = "idea" | "task" | "note" | "habit";
 
 interface CreateStore {
   open: boolean;

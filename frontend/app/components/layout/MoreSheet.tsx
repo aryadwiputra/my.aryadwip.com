@@ -1,11 +1,9 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
-import { StickyNote, Settings, Timer, Repeat, X } from "lucide-react";
+import { Settings, Timer, X } from "lucide-react";
 import { cn } from "~/lib/cn";
 
 const items = [
-  { to: "/notes", label: "Notes", icon: StickyNote },
-  { to: "/habits", label: "Habits", icon: Repeat },
   { to: "/timer", label: "Focus Timer", icon: Timer },
   { to: "/settings", label: "Settings", icon: Settings },
 ];

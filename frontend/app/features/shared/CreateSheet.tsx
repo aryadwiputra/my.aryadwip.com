@@ -1,14 +1,16 @@
 import { useEffect } from "react";
-import { Lightbulb, CheckSquare, StickyNote, X } from "lucide-react";
+import { Lightbulb, CheckSquare, StickyNote, Repeat, X } from "lucide-react";
 import { useCreateStore, type CreateType } from "./createStore";
 import { QuickCapture } from "~/features/ideas/components/QuickCapture";
 import { TaskForm } from "~/features/tasks/components/TaskForm";
 import { NoteForm } from "~/features/notes/components/NoteForm";
+import { HabitForm } from "~/features/habits/components/HabitForm";
 
 const options: { type: CreateType; label: string; desc: string; icon: typeof Lightbulb }[] = [
   { type: "idea", label: "Ide", desc: "Tangkap ide cepat", icon: Lightbulb },
   { type: "task", label: "Task", desc: "Buat tugas baru", icon: CheckSquare },
   { type: "note", label: "Note", desc: "Simpan catatan", icon: StickyNote },
+  { type: "habit", label: "Habit", desc: "Bangun kebiasaan", icon: Repeat },
 ];
 
 export function CreateSheet() {
@@ -35,6 +37,9 @@ export function CreateSheet() {
   }
   if (type === "note") {
     return <NoteForm open onClose={close} />;
+  }
+  if (type === "habit") {
+    return <HabitForm open onClose={close} />;
   }
 
   if (!open) return null;
