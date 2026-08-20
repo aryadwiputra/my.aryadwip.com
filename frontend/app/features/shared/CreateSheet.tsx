@@ -13,6 +13,10 @@ const options: { type: CreateType; label: string; desc: string; icon: typeof Lig
   { type: "habit", label: "Habit", desc: "Bangun kebiasaan", icon: Repeat },
 ];
 
+/**
+ * Create sheet — opens the 4-way choice (Ide/Task/Note/Habit).
+ * Mobile: bottom sheet. Desktop (lg+): centered modal. Both open from the FAB.
+ */
 export function CreateSheet() {
   const open = useCreateStore((s) => s.open);
   const type = useCreateStore((s) => s.type);
@@ -44,44 +48,70 @@ export function CreateSheet() {
 
   if (!open) return null;
 
+  const optionsList = (
+    <div className="p-3">
+      {options.map((opt) => (
+        <button
+          key={opt.type}
+          onClick={() => setType(opt.type)}
+          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-800"
+        >
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600/10 text-blue-600 dark:text-blue-400">
+            <opt.icon className="h-5 w-5" />
+          </span>
+          <span>
+            <span className="block text-sm font-medium text-gray-900 dark:text-white">
+              {opt.label}
+            </span>
+            <span className="block text-xs text-gray-500 dark:text-gray-400">{opt.desc}</span>
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+
+  const header = (
+    <div className="flex items-center justify-between px-5 pt-4">
+      <span className="text-sm font-semibold text-gray-900 dark:text-white">Tambah</span>
+      <button
+        onClick={close}
+        aria-label="Tutup"
+        className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+      >
+        <X className="h-5 w-5" />
+      </button>
+    </div>
+  );
+
+  const nudge = (
+    <p className="mx-5 mt-1 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+      🧠 Lagi pengen scroll? Tulis 1 ide dulu — 30 detik, jauh lebih berharga.
+    </p>
+  );
+
   return (
-    <div className="fixed inset-0 z-50 lg:hidden">
-      <div className="absolute inset-0 bg-black/50" onClick={close} />
-      <div className="absolute inset-x-0 bottom-0 rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)] shadow-xl dark:bg-gray-900">
-        <div className="flex items-center justify-between px-5 pt-4">
-          <span className="text-sm font-semibold text-gray-900 dark:text-white">Tambah</span>
-          <button
-            onClick={close}
-            aria-label="Tutup"
-            className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        {/* Nudge: capture instead of scroll */}
-        <p className="mx-5 mt-1 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
-          🧠 Lagi pengen scroll? Tulis 1 ide dulu — 30 detik, jauh lebih berharga.
-        </p>
-        <div className="p-3">
-          {options.map((opt) => (
-            <button
-              key={opt.type}
-              onClick={() => setType(opt.type)}
-              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600/10 text-blue-600 dark:text-blue-400">
-                <opt.icon className="h-5 w-5" />
-              </span>
-              <span>
-                <span className="block text-sm font-medium text-gray-900 dark:text-white">
-                  {opt.label}
-                </span>
-                <span className="block text-xs text-gray-500 dark:text-gray-400">{opt.desc}</span>
-              </span>
-            </button>
-          ))}
+    <>
+      {/* Mobile: bottom sheet */}
+      <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="absolute inset-0 bg-black/50" onClick={close} />
+        <div className="absolute inset-x-0 bottom-0 rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)] shadow-xl dark:bg-gray-900">
+          {header}
+          {nudge}
+          {optionsList}
         </div>
       </div>
-    </div>
+
+      {/* Desktop: centered modal */}
+      <div className="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4 lg:flex" onClick={close}>
+        <div
+          className="w-full max-w-sm rounded-2xl bg-white shadow-2xl dark:bg-gray-900"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {header}
+          {nudge}
+          {optionsList}
+        </div>
+      </div>
+    </>
   );
 }

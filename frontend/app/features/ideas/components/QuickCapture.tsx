@@ -58,6 +58,7 @@ export function QuickCapture({ open, onClose }: { open: boolean; onClose: () => 
 export function QuickCaptureGlobal() {
   const open = useQuickCaptureStore((s) => s.open);
   const setOpen = useQuickCaptureStore((s) => s.setOpen);
+  const createOpen = useCreateStore((s) => s.open);
   const setCreateOpen = useCreateStore((s) => s.setOpen);
 
   useEffect(() => {
@@ -75,7 +76,7 @@ export function QuickCaptureGlobal() {
     <>
       <QuickCapture open={open} onClose={() => setOpen(false)} />
       <button
-        onClick={() => setCreateOpen(true)}
+        onClick={() => setCreateOpen(!createOpen)}
         aria-label="Tambah"
         title="Tambah (Ctrl+K)"
         className="fixed bottom-6 right-6 z-50 hidden h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition hover:bg-blue-700 lg:flex"
