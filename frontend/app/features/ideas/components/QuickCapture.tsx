@@ -78,7 +78,7 @@ export function QuickCaptureGlobal() {
         onClick={() => setCreateOpen(true)}
         aria-label="Tambah"
         title="Tambah (Ctrl+K)"
-        className="fixed bottom-6 right-6 z-40 hidden h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition hover:bg-blue-700 lg:flex"
+        className="fixed bottom-6 right-6 z-50 hidden h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition hover:bg-blue-700 lg:flex"
       >
         <Plus className="h-6 w-6" />
       </button>

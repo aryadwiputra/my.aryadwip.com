@@ -129,11 +129,11 @@ export function GlobalTimer() {
 
   return (
     <>
-      {/* Floating mini-timer chip while running */}
+      {/* Floating mini-timer chip while running — LEFT side so it never covers the desktop FAB (bottom-right) */}
       {running && (
         <button
           onClick={() => navigate("/timer")}
-          className="fixed bottom-20 right-4 z-40 flex items-center gap-2 rounded-full border border-blue-200 bg-blue-600 px-3 py-2 text-white shadow-lg transition hover:bg-blue-700 dark:border-blue-500 lg:bottom-6 lg:right-6"
+          className="fixed bottom-20 left-4 z-40 flex items-center gap-2 rounded-full border border-blue-200 bg-blue-600 px-3 py-2 text-white shadow-lg transition hover:bg-blue-700 dark:border-blue-500 lg:bottom-6 lg:left-6"
           aria-label="Buka timer"
         >
           <TimerIcon className="h-4 w-4" />
@@ -152,12 +152,12 @@ export function GlobalTimer() {
         </button>
       )}
 
-      {/* Ambience indicator — visible on any page except /timer (has its own panel) */}
+      {/* Ambience indicator — LEFT side, below the timer chip; visible on any page except /timer */}
       {ambienceActive && !onTimerPage && (
         <button
           onClick={() => stopAll()}
           title="Hentikan ambience"
-          className="fixed bottom-40 right-4 z-40 flex items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-lg transition hover:border-red-400 hover:text-red-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 lg:bottom-24 lg:right-6"
+          className="fixed bottom-40 left-4 z-40 flex items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-lg transition hover:border-red-400 hover:text-red-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 lg:bottom-24 lg:left-6"
         >
           <Volume2 className="h-3.5 w-3.5 text-emerald-500" />
           {ambienceLabel}
