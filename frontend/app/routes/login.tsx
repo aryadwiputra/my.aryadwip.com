@@ -4,6 +4,11 @@ import { z } from "zod";
 import { useAuthStore } from "~/stores/auth";
 import { login } from "~/lib/authService";
 import { ApiError } from "~/lib/api";
+import { pageMeta } from "~/lib/seo";
+
+export function meta() {
+  return pageMeta("Masuk");
+}
 
 const schema = z.object({
   email: z.string().email("Email tidak valid"),
@@ -53,7 +58,7 @@ export default function LoginPage() {
     <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4 dark:bg-gray-950">
       <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">ClarityFlow</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Niat</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Masuk ke akun Anda</p>
         </div>
 

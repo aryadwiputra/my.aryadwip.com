@@ -1,7 +1,7 @@
 {
-  "name": "ClarityFlow",
-  "short_name": "ClarityFlow",
-  "description": "Personal productivity platform — journaling, tasks, ideas, notes, focus timer.",
+  "name": "Niat",
+  "short_name": "Niat",
+  "description": "Niat — journal, focus timer, habits, dan task untuk hidup lebih baik. Mulai hari dengan niat, akhiri dengan refleksi.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f9fafb",

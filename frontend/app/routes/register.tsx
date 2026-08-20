@@ -4,6 +4,11 @@ import { z } from "zod";
 import { useAuthStore } from "~/stores/auth";
 import { register } from "~/lib/authService";
 import { ApiError } from "~/lib/api";
+import { pageMeta } from "~/lib/seo";
+
+export function meta() {
+  return pageMeta("Daftar");
+}
 
 const schema = z.object({
   name: z.string().min(1, "Nama wajib diisi"),

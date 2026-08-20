@@ -2,7 +2,7 @@ import { Navigate } from "react-router";
 import { useAuthStore } from "~/stores/auth";
 
 export function meta() {
-  return [{ title: "ClarityFlow" }];
+  return [{ title: "Niat — Journal, fokus, dan kebiasaan untuk hidup lebih baik" }];
 }
 
 /**

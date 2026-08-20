@@ -1,4 +1,9 @@
 import { Link } from "react-router";
+import { pageMeta } from "~/lib/seo";
+
+export function meta() {
+  return pageMeta("Halaman Tidak Ditemukan");
+}
 
 export default function NotFoundPage() {
   return (

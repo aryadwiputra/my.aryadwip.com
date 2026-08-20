@@ -31,13 +31,39 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
+export function meta() {
+  return [
+    { title: "Niat — Journal, fokus, dan kebiasaan untuk hidup lebih baik" },
+    {
+      name: "description",
+      content:
+        "Niat — aplikasi produktivitas pribadi untuk journal pagi & malam, focus timer, habits, task, dan menangkap ide. Mulai hari dengan niat, akhiri dengan refleksi.",
+    },
+    { property: "og:title", content: "Niat — Journal, fokus, dan kebiasaan untuk hidup lebih baik" },
+    {
+      property: "og:description",
+      content:
+        "Mulai hari dengan niat, akhiri dengan refleksi. Journal, focus timer, habits, dan task dalam satu aplikasi.",
+    },
+    { property: "og:type", content: "website" },
+    { property: "og:url", content: "https://my.aryadwip.com/" },
+    { property: "og:image", content: "https://my.aryadwip.com/icon.svg" },
+    { name: "twitter:card", content: "summary" },
+    { name: "twitter:title", content: "Niat — Journal, fokus, dan kebiasaan untuk hidup lebih baik" },
+    {
+      name: "twitter:description",
+      content: "Mulai hari dengan niat, akhiri dengan refleksi. Journal, fokus, dan kebiasaan.",
+    },
+  ];
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     initTheme();
     registerServiceWorker();
   }, []);
   return (
-    <html lang="en">
+    <html lang="id">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />

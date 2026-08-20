@@ -1,4 +1,4 @@
-const CACHE = "clarityflow-v69dfbc1";
+const CACHE = "clarityflow-vf2e852d";
 const ASSETS = ["/", "/manifest.webmanifest", "/icon.svg"];
 
 self.addEventListener("install", (event) => {
